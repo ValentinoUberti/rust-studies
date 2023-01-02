@@ -1,0 +1,1 @@
+/home/vale/Projects/Rust-Studies/rust-studies/chapter12/minigrep/target/debug/minigrep: /home/vale/Projects/Rust-Studies/rust-studies/chapter12/minigrep/src/lib.rs /home/vale/Projects/Rust-Studies/rust-studies/chapter12/minigrep/src/main.rs
