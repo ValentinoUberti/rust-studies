@@ -1,0 +1,1 @@
+/home/vale/Projects/Rust-Studies/rust-studies/chapter15/workspaces/target/debug/adder: /home/vale/Projects/Rust-Studies/rust-studies/chapter15/workspaces/add_one/src/lib.rs /home/vale/Projects/Rust-Studies/rust-studies/chapter15/workspaces/adder/src/main.rs

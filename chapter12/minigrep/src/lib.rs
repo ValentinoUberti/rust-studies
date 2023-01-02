@@ -9,14 +9,28 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
+    //This usage of the impl Trait syntax we discussed in the “Traits as Parameters” section of Chapter 10 means that args can be any type that implements the Iterator type and returns String items.
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
         // --snip--
-        if args.len() < 3 {
+        /*if args.len() < 3 {
             return Err("not enough arguments");
-        }
+        }*/
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+        // skip the first args (it's the filename itself)
+
+        args.next();
+
+        // Try to catch the first parameter (it should be the "query")
+
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file name"),
+        };
 
         let ignore_case = env::var("IGNORE_CASE").is_ok();
 
@@ -56,10 +70,7 @@ Rust:
 safe, fast, productive.
 Pick three.";
 
-        assert_eq!(
-            vec!["Pick three."],
-            search_case_sensitive(query, contents)
-        );
+        assert_eq!(vec!["Pick three."], search_case_sensitive(query, contents));
     }
 
     #[test]
@@ -78,25 +89,15 @@ Pick three.";
 }
 
 pub fn search_case_sensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.to_lowercase().contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+    contents
+        .lines()
+        .filter(|line| line.to_lowercase().contains(query))
+        .collect()
 }
