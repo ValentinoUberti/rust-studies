@@ -1,1 +1,0 @@
-/home/vale/Projects/Rust-Studies/rust-studies/chapter7/restourant/target/debug/librestourant.rlib: /home/vale/Projects/Rust-Studies/rust-studies/chapter7/restourant/src/front_of_house/hosting.rs /home/vale/Projects/Rust-Studies/rust-studies/chapter7/restourant/src/front_of_house.rs /home/vale/Projects/Rust-Studies/rust-studies/chapter7/restourant/src/lib.rs
