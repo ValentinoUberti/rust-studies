@@ -1,6 +1,4 @@
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
 
@@ -137,6 +135,9 @@ fn main() -> std::io::Result<()> {
     let scrape_config: OrganizationYaml = serde_yaml::from_reader(f).expect("Could not read values.");
 
     println!("{}",scrape_config.quay_endpoint);
+    for repo in scrape_config.repositories {
+        println!("{:#?}",repo.name);
+    }
     
     
     

@@ -1,0 +1,12 @@
+[package]
+name = "qcli"
+version = "0.1.1"
+edition = "2021"
+about = "Quay cli written in Rust"
+authors = ["Valentino Uberti <vuberti@redhat.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.0.32", features = ["derive"] }
+

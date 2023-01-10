@@ -19,9 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
    
     for org in response["organizations"].as_array() {
-        
+        println!("{}",serde_json::to_string_pretty(&org).unwrap());
 
     }
-    println!("{:#?}", response["organizations"]);
+    //println!("{:#?}", response);
     Ok(())
 }
