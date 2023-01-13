@@ -1,8 +1,9 @@
 mod quay_config_reader;
 use std::error::Error;
 use clap::Parser;
+//use console_subscriber;
 
-use crate::quay_config_reader::quay_config_reader::QuayXmlConfig;
+use crate::quay_config_reader::{quay_config_reader::QuayXmlConfig, organization_struct::organization_struct::Actions};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about="Quay batch processing cli written in Rust", long_about = None)]
@@ -25,13 +26,24 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn Error>> {
+    //console_subscriber::init();
     let args = Args::parse();
     let mut config = QuayXmlConfig::new(args.dir);
+    
+    
     config.load_config().await?;
 
     for org in config.get_organizations() {
-        println!("Org name: {}",org.quay_organization)
-    }
+        println!("Org name: {}",org.quay_organization);
+        
+        //let who2 = org.delete("token".to_owned());
+        let who = org.create("token".to_owned(), "body".to_owned());
+        //tokio::join!(who,who2);
+        who.await?;
+
+        
+    
+}
 
     Ok(())
 }

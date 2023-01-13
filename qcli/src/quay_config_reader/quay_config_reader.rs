@@ -18,7 +18,7 @@ impl QuayXmlConfig {
         }
     }
 
-    pub async fn load_config(&mut self) -> Result<(), ::std::io::Error> {
+    pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
         
         let mut files = read_dir(self.directory.to_owned()).await?;
 

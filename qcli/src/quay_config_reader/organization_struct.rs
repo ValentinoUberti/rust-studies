@@ -1,9 +1,55 @@
-
 pub mod organization_struct {
-    use serde::{Deserialize, Serialize};
-   
+    use std::{collections::HashMap, error::Error};
 
-    #[derive(Serialize, Deserialize,Default,Debug)]
+    use async_trait::async_trait;
+
+    use serde::{Deserialize, Serialize};
+    use serde_json::Value;
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct JSONResponse {
+        json: HashMap<String, String>,
+    }
+
+    #[async_trait]
+    pub trait Actions {
+        async fn create(&self, token: String, body: String) -> Result<(), Box<dyn Error>>;
+        async fn delete(&self, token: String) -> bool;
+    }
+
+    #[async_trait]
+    impl Actions for OrganizationYaml {
+        async fn create(&self, token: String, body: String) -> Result<(), Box<dyn Error>> {
+            let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
+            println!("{}", endpoint);
+
+            let mut map = HashMap::new();
+            map.insert("name", &self.quay_organization);
+            map.insert("email", &self.quay_organization_role_email);
+
+            let api = reqwest::Client::new()
+                .post(endpoint)
+                .header("Content-Type", "application/json")
+                .header("accept", "application/json")
+                .header(
+                    "Authorization",
+                    format!("Bearer {}", &self.quay_oauth_token),
+                )
+                .json(&map);
+
+            let response = api.send().await?.json::<serde_json::Value>().await?;
+            println!("{:?}", response);
+
+            Ok(())
+        }
+
+        async fn delete(&self, token: String) -> bool {
+            println!("Delete");
+            true
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Default, Debug)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
         quay_endpoint: String,
@@ -33,7 +79,7 @@ pub mod organization_struct {
         teams: Vec<Team>,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Repository {
         #[serde(rename = "name")]
         name: String,
@@ -51,7 +97,7 @@ pub mod organization_struct {
         permissions: Option<Permissions>,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
         src_registry: String,
@@ -75,7 +121,7 @@ pub mod organization_struct {
         is_enabled: bool,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Permissions {
         #[serde(rename = "robots")]
         robots: Vec<UserElement>,
@@ -87,7 +133,7 @@ pub mod organization_struct {
         teams: Option<Vec<UserElement>>,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct UserElement {
         #[serde(rename = "name")]
         name: String,
@@ -96,7 +142,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct RobotDetails {
         #[serde(rename = "name")]
         name: String,
@@ -105,7 +151,7 @@ pub mod organization_struct {
         desc: String,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Team {
         #[serde(rename = "name")]
         name: String,
@@ -120,7 +166,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize,Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Members {
         #[serde(rename = "users")]
         users: Vec<String>,
