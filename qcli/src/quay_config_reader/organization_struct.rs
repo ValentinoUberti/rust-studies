@@ -1,9 +1,9 @@
 
 pub mod organization_struct {
     use serde::{Deserialize, Serialize};
-    use serde_yaml::{self};
+   
 
-    #[derive(Serialize, Deserialize,Default)]
+    #[derive(Serialize, Deserialize,Default,Debug)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
         quay_endpoint: String,
@@ -15,7 +15,7 @@ pub mod organization_struct {
         quay_validate_certs: String,
 
         #[serde(rename = "quay_organization")]
-        quay_organization: String,
+        pub quay_organization: String,
 
         #[serde(rename = "quay_organization_role_name")]
         quay_organization_role_name: String,
@@ -33,7 +33,7 @@ pub mod organization_struct {
         teams: Vec<Team>,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct Repository {
         #[serde(rename = "name")]
         name: String,
@@ -51,7 +51,7 @@ pub mod organization_struct {
         permissions: Option<Permissions>,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
         src_registry: String,
@@ -75,7 +75,7 @@ pub mod organization_struct {
         is_enabled: bool,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct Permissions {
         #[serde(rename = "robots")]
         robots: Vec<UserElement>,
@@ -87,7 +87,7 @@ pub mod organization_struct {
         teams: Option<Vec<UserElement>>,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct UserElement {
         #[serde(rename = "name")]
         name: String,
@@ -96,7 +96,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct RobotDetails {
         #[serde(rename = "name")]
         name: String,
@@ -105,7 +105,7 @@ pub mod organization_struct {
         desc: String,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct Team {
         #[serde(rename = "name")]
         name: String,
@@ -120,7 +120,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize,Debug)]
     pub struct Members {
         #[serde(rename = "users")]
         users: Vec<String>,

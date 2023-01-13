@@ -26,8 +26,12 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn Error>> {
     let args = Args::parse();
-    let config = QuayXmlConfig::new(args.dir)?;
-    println!("{}",config.get_dir());
+    let mut config = QuayXmlConfig::new(args.dir);
+    config.load_config().await?;
+
+    for org in config.get_organizations() {
+        println!("Org name: {}",org.quay_organization)
+    }
 
     Ok(())
 }
