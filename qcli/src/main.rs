@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         //let who2 = org.create();
         //tokio::join!(who,who2);
         // who.await?;
-        handles.push(org.create());
+        handles.push(org.create_organization());
     }
 
     let results = join_all(handles);

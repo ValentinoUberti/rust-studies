@@ -1,5 +1,5 @@
 pub mod organization_struct {
-    use std::{collections::HashMap, error::Error};
+    use std::{collections::HashMap, error::Error, time::Duration};
 
     use async_trait::async_trait;
 
@@ -8,8 +8,8 @@ pub mod organization_struct {
 
     #[async_trait]
     pub trait Actions {
-        async fn create(&self) -> Result<(), Box<dyn Error>>;
-        async fn delete(&self, token: String) -> bool;
+        async fn create_organization(&self) -> Result<(), Box<dyn Error>>;
+        async fn delete_organization(&self, token: String) -> bool;
         async fn send_post_request(
             &self,
             endpoint: String,
@@ -17,7 +17,7 @@ pub mod organization_struct {
             token: &String,
         ) -> Result<Value, Box<dyn Error>> {
             let api = reqwest::Client::new()
-                .post(endpoint)
+                .post(endpoint).timeout(Duration::from_secs(5))
                 .header("Content-Type", "application/json")
                 .header("accept", "application/json")
                 .header("Authorization", format!("Bearer {}", &token))
@@ -30,7 +30,7 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
-        async fn create(&self) -> Result<(), Box<dyn Error>> {
+        async fn create_organization(&self) -> Result<(), Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
             let mut body = HashMap::new();
             body.insert("name", &self.quay_organization);
@@ -45,7 +45,7 @@ pub mod organization_struct {
             Ok(())
         }
 
-        async fn delete(&self, token: String) -> bool {
+        async fn delete_organization(&self, token: String) -> bool {
             println!("Delete");
             true
         }
