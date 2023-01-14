@@ -33,7 +33,7 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    pub fn get_organizations<'a>(self: &'static Self) -> &'static Vec<OrganizationYaml> {
+    pub fn get_organizations<>(&self) -> &Vec<OrganizationYaml> {
         &self.organization
     }
     

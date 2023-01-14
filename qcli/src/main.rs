@@ -1,7 +1,8 @@
-#![deny(elided_lifetimes_in_paths)] 
+#![deny(elided_lifetimes_in_paths)]
 mod quay_config_reader;
 use clap::Parser;
 use console_subscriber::spawn;
+use futures::future::join_all;
 use std::error::Error;
 //use console_subscriber;
 
@@ -38,19 +39,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut handles = Vec::new();
 
-    
-    for org in config.get_organizations() {
-        println!("Org name: {}", org.quay_organization);
+    let orgs = config.get_organizations();
 
-        let who = org.create();
+    for org in orgs {
+        println!("Added org: {}", org.quay_organization);
+
+        //let who = org.create();
         //let who2 = org.create();
         //tokio::join!(who,who2);
         // who.await?;
-        handles.push(tokio::spawn(async move {who}));
-        
+        handles.push(org.create());
     }
 
-   
+    let results = join_all(handles);
+    results.await;
 
     Ok(())
 }

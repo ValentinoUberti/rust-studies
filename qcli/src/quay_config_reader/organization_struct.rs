@@ -1,4 +1,3 @@
-#![deny(elided_lifetimes_in_paths)]
 pub mod organization_struct {
     use std::{collections::HashMap, error::Error};
 
