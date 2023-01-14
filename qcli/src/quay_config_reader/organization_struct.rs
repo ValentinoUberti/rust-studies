@@ -1,3 +1,4 @@
+#![deny(elided_lifetimes_in_paths)]
 pub mod organization_struct {
     use std::{collections::HashMap, error::Error};
 
@@ -6,38 +7,40 @@ pub mod organization_struct {
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
-    #[derive(Serialize, Deserialize, Debug)]
-    struct JSONResponse {
-        json: HashMap<String, String>,
-    }
-
     #[async_trait]
     pub trait Actions {
-        async fn create(&self, token: String, body: String) -> Result<(), Box<dyn Error>>;
+        async fn create(&self) -> Result<(), Box<dyn Error>>;
         async fn delete(&self, token: String) -> bool;
-    }
-
-    #[async_trait]
-    impl Actions for OrganizationYaml {
-        async fn create(&self, token: String, body: String) -> Result<(), Box<dyn Error>> {
-            let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
-            println!("{}", endpoint);
-
-            let mut map = HashMap::new();
-            map.insert("name", &self.quay_organization);
-            map.insert("email", &self.quay_organization_role_email);
-
+        async fn send_post_request(
+            &self,
+            endpoint: String,
+            body: HashMap<&str, &String>,
+            token: &String,
+        ) -> Result<Value, Box<dyn Error>> {
             let api = reqwest::Client::new()
                 .post(endpoint)
                 .header("Content-Type", "application/json")
                 .header("accept", "application/json")
-                .header(
-                    "Authorization",
-                    format!("Bearer {}", &self.quay_oauth_token),
-                )
-                .json(&map);
+                .header("Authorization", format!("Bearer {}", &token))
+                .json(&body);
 
             let response = api.send().await?.json::<serde_json::Value>().await?;
+            Ok(response)
+        }
+    }
+
+    #[async_trait]
+    impl Actions for OrganizationYaml {
+        async fn create(&self) -> Result<(), Box<dyn Error>> {
+            let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
+            let mut body = HashMap::new();
+            body.insert("name", &self.quay_organization);
+            body.insert("email", &self.quay_organization_role_email);
+
+            let response = &self
+                .send_post_request(endpoint, body, &self.quay_oauth_token)
+                .await?;
+
             println!("{:?}", response);
 
             Ok(())

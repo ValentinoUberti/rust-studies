@@ -1,9 +1,13 @@
+#![deny(elided_lifetimes_in_paths)] 
 mod quay_config_reader;
-use std::error::Error;
 use clap::Parser;
+use console_subscriber::spawn;
+use std::error::Error;
 //use console_subscriber;
 
-use crate::quay_config_reader::{quay_config_reader::QuayXmlConfig, organization_struct::organization_struct::Actions};
+use crate::quay_config_reader::{
+    organization_struct::organization_struct::Actions, quay_config_reader::QuayXmlConfig,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about="Quay batch processing cli written in Rust", long_about = None)]
@@ -25,25 +29,28 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(),Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();
     let args = Args::parse();
     let mut config = QuayXmlConfig::new(args.dir);
-    
-    
+
     config.load_config().await?;
 
-    for org in config.get_organizations() {
-        println!("Org name: {}",org.quay_organization);
-        
-        //let who2 = org.delete("token".to_owned());
-        let who = org.create("token".to_owned(), "body".to_owned());
-        //tokio::join!(who,who2);
-        who.await?;
+    let mut handles = Vec::new();
 
-        
     
-}
+    for org in config.get_organizations() {
+        println!("Org name: {}", org.quay_organization);
+
+        let who = org.create();
+        //let who2 = org.create();
+        //tokio::join!(who,who2);
+        // who.await?;
+        handles.push(tokio::spawn(async move {who}));
+        
+    }
+
+   
 
     Ok(())
 }

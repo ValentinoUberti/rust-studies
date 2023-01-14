@@ -1,5 +1,5 @@
 use super::organization_struct::organization_struct::OrganizationYaml;
-use std::fs::File;
+use std::{fs::File, sync::Arc};
 use tokio::fs::read_dir;
 
 
@@ -33,7 +33,7 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
+    pub fn get_organizations<'a>(self: &'static Self) -> &'static Vec<OrganizationYaml> {
         &self.organization
     }
     
