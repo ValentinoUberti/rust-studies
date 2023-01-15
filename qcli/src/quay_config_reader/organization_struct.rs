@@ -37,7 +37,7 @@ pub mod organization_struct {
             let response_status = api.send().await?;
             let status_code = response_status.status();
             let response = response_status.json::<serde_json::Value>().await?;
-            println!("{}", status_code);
+            //println!("{}", status_code);
             let quay_response = QuayResponse {
                 response,
                 status_code,
@@ -63,7 +63,7 @@ pub mod organization_struct {
             let response_status = api.send().await?;
             let status_code = response_status.status();
             let response = response_status.json::<serde_json::Value>().await?;
-            println!("{}", status_code);
+            //println!("{}", status_code);
             let quay_response = QuayResponse {
                 response,
                 status_code,
@@ -81,6 +81,7 @@ pub mod organization_struct {
             body.insert("name", &self.quay_organization);
             body.insert("email", &self.quay_organization_role_email);
 
+            
             let response = &self
                 .send_post_request(
                     endpoint,
@@ -102,12 +103,13 @@ pub mod organization_struct {
             body.insert("description", &robot.desc);
             //body.insert("unstructured_metadata", empty);
 
+            let description =format!("Creating robot '{}' for organization '{}'",robot.name,&self.quay_organization);
             let response = &self
                 .send_put_request(
                     endpoint,
                     body,
                     &self.quay_oauth_token,
-                    &self.quay_organization,
+                    &description,
                 )
                 .await?;
 

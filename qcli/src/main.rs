@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         match result {
             Ok(r) => {
                 println!("------------------------");
-                println!("Creating robot {}",r.description);
+                println!("{}",r.description);
                 println!("Status code: {}", r.status_code);
                 println!("Message: {}",r.response);
             }
