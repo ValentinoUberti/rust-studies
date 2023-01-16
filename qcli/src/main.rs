@@ -40,6 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = Vec::new();
     let mut handles_all_robots = Vec::new();
     let mut handles_all_teams = Vec::new();
+    let mut handles_all_repositories = Vec::new();
 
     let orgs = config.get_organizations();
 
@@ -51,6 +52,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         for team in &org.teams {
             handles_all_teams.push(org.create_team(team));
+        }
+        for repository in &org.repositories {
+            handles_all_repositories.push(org.create_repository(repository));
         }
     }
 
@@ -91,6 +95,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Create teams
     println!("Creating {} teams cuncurrently", handles_all_teams.len());
     let results = join_all(handles_all_teams);
+
+    for result in results.await {
+        match result {
+            Ok(r) => {
+                println!("------------------------");
+                println!("{}", r.description);
+                println!("Status code: {}", r.status_code);
+                println!("Message: {}", r.response);
+            }
+            Err(e) => println!("Error: {}", e),
+        }
+    }
+
+    println!("------------");
+    // Create repositories
+    println!("Creating {} repositories cuncurrently", handles_all_repositories.len());
+    let results = join_all(handles_all_repositories);
 
     for result in results.await {
         match result {

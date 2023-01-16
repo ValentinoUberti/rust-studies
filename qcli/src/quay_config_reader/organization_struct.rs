@@ -19,6 +19,7 @@ pub mod organization_struct {
         async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_repository(&self, team: &Repository) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_organization(&self, token: String) -> bool;
         async fn send_request(
             &self,
@@ -69,12 +70,13 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
+        
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/robots/{}",
                 &self.quay_endpoint, &self.quay_organization, robot.name
             );
-            let mut body = HashMap::new();
+            let mut body: HashMap<&str, &String>= HashMap::new();
 
             let empty = &String::from("{}");
             body.insert("description", &robot.desc);
@@ -97,6 +99,43 @@ pub mod organization_struct {
             Ok(response.clone())
         }
 
+        async fn create_repository(&self, repo: &Repository) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository",
+                &self.quay_endpoint, 
+            );
+            let mut body: HashMap<&str, &String> = HashMap::new();
+
+           
+            let repo_kind= String::from("image");
+            let empty=String::from("");
+            let desc = repo.description.as_ref().unwrap_or(&empty);
+            let default_visibility=String::from("public");
+            body.insert("description", desc);
+            body.insert("repo_kind", &repo_kind);
+            body.insert("namespace", &self.quay_organization);
+            body.insert("repository", &repo.name);
+            body.insert("visibility", repo.visibility.as_ref().unwrap_or(&default_visibility));
+
+
+            //body.insert("unstructured_metadata", empty);
+
+            let description = format!(
+                "Creating repository '{}' for organization '{}'",
+                repo.name, &self.quay_organization
+            );
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &description,
+                    Method::POST,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
         async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}",
@@ -151,7 +190,7 @@ pub mod organization_struct {
         quay_organization_role_email: String,
 
         #[serde(rename = "repositories")]
-        repositories: Vec<Repository>,
+        pub repositories: Vec<Repository>,
 
         #[serde(rename = "robots")]
         pub robots: Vec<RobotDetails>,
@@ -167,6 +206,10 @@ pub mod organization_struct {
 
         #[serde(rename = "description")]
         description: Option<String>,
+
+        #[serde(rename = "visibility")]
+        visibility: Option<String>,
+
 
         #[serde(rename = "mirror")]
         mirror: bool,
