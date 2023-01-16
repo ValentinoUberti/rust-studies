@@ -39,6 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut handles = Vec::new();
     let mut handles_all_robots = Vec::new();
+    let mut handles_all_teams = Vec::new();
 
     let orgs = config.get_organizations();
 
@@ -48,20 +49,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
         for robot in &org.robots {
             handles_all_robots.push(org.create_robot(robot));
         }
+        for team in &org.teams {
+            handles_all_teams.push(org.create_team(team));
+        }
     }
 
     println!("------------");
     // Create organization
     let results = join_all(handles);
 
-
     for result in results.await {
         match result {
             Ok(r) => {
                 println!("------------------------");
-                println!("Creating organization {}",r.description);
+                println!("Creating organization {}", r.description);
                 println!("Status code: {}", r.status_code);
-                println!("Message: {}",r.response);
+                println!("Message: {}", r.response);
             }
             Err(e) => println!("Error: {}", e),
         }
@@ -69,21 +72,36 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("------------");
     // Create robots
-    println!("Creating {} robots cuncurrently",handles_all_robots.len());
+    println!("Creating {} robots cuncurrently", handles_all_robots.len());
     let results = join_all(handles_all_robots);
 
-    
     for result in results.await {
         match result {
             Ok(r) => {
                 println!("------------------------");
-                println!("{}",r.description);
+                println!("{}", r.description);
                 println!("Status code: {}", r.status_code);
-                println!("Message: {}",r.response);
+                println!("Message: {}", r.response);
             }
             Err(e) => println!("Error: {}", e),
         }
     }
 
+    println!("------------");
+    // Create teams
+    println!("Creating {} teams cuncurrently", handles_all_teams.len());
+    let results = join_all(handles_all_teams);
+
+    for result in results.await {
+        match result {
+            Ok(r) => {
+                println!("------------------------");
+                println!("{}", r.description);
+                println!("Status code: {}", r.status_code);
+                println!("Message: {}", r.response);
+            }
+            Err(e) => println!("Error: {}", e),
+        }
+    }
     Ok(())
 }

@@ -3,7 +3,7 @@ pub mod organization_struct {
 
     use async_trait::async_trait;
 
-    use reqwest::StatusCode;
+    use reqwest::{Method, Request, StatusCode};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -17,43 +17,19 @@ pub mod organization_struct {
     #[async_trait]
     pub trait Actions {
         async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn create_robot(&self,robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_organization(&self, token: String) -> bool;
-        async fn send_post_request(
+        async fn send_request(
             &self,
             endpoint: String,
             body: HashMap<&str, &String>,
             token: &String,
             description: &String,
+            method: reqwest::Method,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let api = reqwest::Client::new()
-                .post(endpoint)
-                .timeout(Duration::from_secs(5))
-                .header("Content-Type", "application/json")
-                .header("accept", "application/json")
-                .header("Authorization", format!("Bearer {}", &token))
-                .json(&body);
-
-            let response_status = api.send().await?;
-            let status_code = response_status.status();
-            let response = response_status.json::<serde_json::Value>().await?;
-            //println!("{}", status_code);
-            let quay_response = QuayResponse {
-                response,
-                status_code,
-                description: description.clone(),
-            };
-            Ok(quay_response)
-        }
-        async fn send_put_request(
-            &self,
-            endpoint: String,
-            body: HashMap<&str, &String>,
-            token: &String,
-            description: &String,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let api = reqwest::Client::new()
-                .put(endpoint)
+                .request(method, endpoint)
                 .timeout(Duration::from_secs(5))
                 .header("Content-Type", "application/json")
                 .header("accept", "application/json")
@@ -81,43 +57,73 @@ pub mod organization_struct {
             body.insert("name", &self.quay_organization);
             body.insert("email", &self.quay_organization_role_email);
 
-            
             let response = &self
-                .send_post_request(
+                .send_request(
                     endpoint,
                     body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
+                    Method::POST,
                 )
                 .await?;
-
-            //println!("{:?}", response);
 
             Ok(response.clone())
         }
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!("https://{}/api/v1/organization/{}/robots/{}", &self.quay_endpoint,&self.quay_organization,robot.name);
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/robots/{}",
+                &self.quay_endpoint, &self.quay_organization, robot.name
+            );
             let mut body = HashMap::new();
-            
-            let empty= &String::from("{}");
+
+            let empty = &String::from("{}");
             body.insert("description", &robot.desc);
             //body.insert("unstructured_metadata", empty);
 
-            let description =format!("Creating robot '{}' for organization '{}'",robot.name,&self.quay_organization);
+            let description = format!(
+                "Creating robot '{}' for organization '{}'",
+                robot.name, &self.quay_organization
+            );
             let response = &self
-                .send_put_request(
+                .send_request(
                     endpoint,
                     body,
                     &self.quay_oauth_token,
                     &description,
+                    Method::PUT,
                 )
                 .await?;
-
-            //println!("{:?}", response);
 
             Ok(response.clone())
         }
 
+        async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/team/{}",
+                &self.quay_endpoint, &self.quay_organization, team.name
+            );
+            let mut body = HashMap::new();
+
+            body.insert("description", &team.description);
+            body.insert("role", &team.role);
+            //body.insert("unstructured_metadata", empty);
+
+            let description = format!(
+                "Creating team '{}' for organization '{}'",
+                team.name, &self.quay_organization
+            );
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &description,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
         async fn delete_organization(&self, token: String) -> bool {
             println!("Delete");
             true
@@ -151,7 +157,7 @@ pub mod organization_struct {
         pub robots: Vec<RobotDetails>,
 
         #[serde(rename = "teams")]
-        teams: Vec<Team>,
+        pub teams: Vec<Team>,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
