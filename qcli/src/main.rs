@@ -7,7 +7,8 @@ use std::error::Error;
 //use console_subscriber;
 
 use crate::quay_config_reader::{
-    organization_struct::organization_struct::Actions, quay_config_reader::QuayXmlConfig,
+    organization_struct::organization_struct::{Actions, UserElement},
+    quay_config_reader::QuayXmlConfig,
 };
 
 #[derive(Parser, Debug)]
@@ -38,15 +39,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     config.load_config().await?;
 
     let mut handles = Vec::new();
+    let mut handles_delete_organization = Vec::new();
     let mut handles_all_robots = Vec::new();
     let mut handles_all_teams = Vec::new();
     let mut handles_all_repositories = Vec::new();
+    let mut handles_all_repositories_permissions = Vec::new();
 
     let orgs = config.get_organizations();
 
     for org in orgs {
         println!("Added org: {}", org.quay_organization);
+
         handles.push(org.create_organization());
+        handles_delete_organization.push(org.delete_organization());
+
         for robot in &org.robots {
             handles_all_robots.push(org.create_robot(robot));
         }
@@ -55,6 +61,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
+
+            if let Some(permissions) = &repository.permissions {
+                for robot in &permissions.robots {
+                    handles_all_repositories_permissions
+                        .push(org.grant_robot_permission_to_repository(&repository.name, &robot))
+                }
+
+                for team in &permissions.teams {
+                    for t in team {
+                        handles_all_repositories_permissions
+                            .push(org.grant_team_permission_to_repository(&repository.name, &t))
+                    }
+                }
+                for user in &permissions.users {
+                    handles_all_repositories_permissions
+                        .push(org.grant_user_permission_to_repository(&repository.name, &user))
+                }
+            }
         }
     }
 
@@ -110,7 +134,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("------------");
     // Create repositories
-    println!("Creating {} repositories cuncurrently", handles_all_repositories.len());
+    println!(
+        "Creating {} repositories cuncurrently",
+        handles_all_repositories.len()
+    );
     let results = join_all(handles_all_repositories);
 
     for result in results.await {
@@ -124,5 +151,41 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Err(e) => println!("Error: {}", e),
         }
     }
+
+    println!("------------");
+    // Create repositories
+    println!(
+        "Creating {} repositories permissions cuncurrently",
+        handles_all_repositories_permissions.len()
+    );
+    let results = join_all(handles_all_repositories_permissions);
+
+    for result in results.await {
+        match result {
+            Ok(r) => {
+                println!("------------------------");
+                println!("{}", r.description);
+                println!("Status code: {}", r.status_code);
+                println!("Message: {}", r.response);
+            }
+            Err(e) => println!("Error: {}", e),
+        }
+    }
+
+    /*
+     let results = join_all(handles_delete_organization);
+
+     for result in results.await {
+         match result {
+             Ok(r) => {
+                 println!("------------------------");
+                 println!("{}", r.description);
+                 println!("Status code: {}", r.status_code);
+                 println!("Message: {}", r.response);
+             }
+             Err(e) => println!("Error: {}", e),
+         }
+     }
+    */
     Ok(())
 }

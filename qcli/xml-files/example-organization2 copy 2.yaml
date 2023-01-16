@@ -21,6 +21,7 @@ quay_organization_role_email: ""
 # Repositories
 repositories:
   - name: alpine
+    visibility: private
     description: "mirror of **quay.io/libpod/alpine**, mirrored tags: latest, v1"
     mirror: true
     mirror_params:

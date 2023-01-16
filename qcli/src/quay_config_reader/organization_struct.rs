@@ -17,10 +17,17 @@ pub mod organization_struct {
     #[async_trait]
     pub trait Actions {
         async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_user_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_robot_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_team_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn create_repository(&self, team: &Repository) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn delete_organization(&self, token: String) -> bool;
+        async fn create_repository(
+            &self,
+            team: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+
         async fn send_request(
             &self,
             endpoint: String,
@@ -37,10 +44,14 @@ pub mod organization_struct {
                 .header("Authorization", format!("Bearer {}", &token))
                 .json(&body);
 
+            //println!("{:?}", api);
             let response_status = api.send().await?;
             let status_code = response_status.status();
-            let response = response_status.json::<serde_json::Value>().await?;
-            //println!("{}", status_code);
+            let response = match response_status.json::<serde_json::Value>().await {
+                Ok(r) => r,
+                Err(_) => Value::Null,
+            };
+            //println!("{:?}", response);
             let quay_response = QuayResponse {
                 response,
                 status_code,
@@ -52,6 +63,62 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
+
+        async fn grant_user_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
+
+            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/user/{}", &self.quay_endpoint,&self.quay_organization,repo,user.name);
+            let mut body = HashMap::new();
+            body.insert("role",&user.role);
+            
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+        
+        async fn grant_team_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
+
+            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/team/{}", &self.quay_endpoint,&self.quay_organization,repo,user.name);
+            let mut body = HashMap::new();
+            body.insert("role",&user.role);
+            
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+        async fn grant_robot_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
+
+            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/user/{}", &self.quay_endpoint,&self.quay_organization,repo,format!("{}+{}",&self.quay_organization,user.name));
+            let mut body = HashMap::new();
+            body.insert("role",&user.role);
+            
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
         async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
             let mut body = HashMap::new();
@@ -70,17 +137,35 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        
+
+        async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}",
+                &self.quay_endpoint, &self.quay_organization
+            );
+            let body = HashMap::new();
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::DELETE,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/robots/{}",
                 &self.quay_endpoint, &self.quay_organization, robot.name
             );
-            let mut body: HashMap<&str, &String>= HashMap::new();
+            let mut body: HashMap<&str, &String> = HashMap::new();
 
-            let empty = &String::from("{}");
             body.insert("description", &robot.desc);
-            //body.insert("unstructured_metadata", empty);
 
             let description = format!(
                 "Creating robot '{}' for organization '{}'",
@@ -99,43 +184,6 @@ pub mod organization_struct {
             Ok(response.clone())
         }
 
-        async fn create_repository(&self, repo: &Repository) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/repository",
-                &self.quay_endpoint, 
-            );
-            let mut body: HashMap<&str, &String> = HashMap::new();
-
-           
-            let repo_kind= String::from("image");
-            let empty=String::from("");
-            let desc = repo.description.as_ref().unwrap_or(&empty);
-            let default_visibility=String::from("public");
-            body.insert("description", desc);
-            body.insert("repo_kind", &repo_kind);
-            body.insert("namespace", &self.quay_organization);
-            body.insert("repository", &repo.name);
-            body.insert("visibility", repo.visibility.as_ref().unwrap_or(&default_visibility));
-
-
-            //body.insert("unstructured_metadata", empty);
-
-            let description = format!(
-                "Creating repository '{}' for organization '{}'",
-                repo.name, &self.quay_organization
-            );
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &description,
-                    Method::POST,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
         async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}",
@@ -163,9 +211,45 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        async fn delete_organization(&self, token: String) -> bool {
-            println!("Delete");
-            true
+        async fn create_repository(
+            &self,
+            repo: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!("https://{}/api/v1/repository", &self.quay_endpoint,);
+            let mut body: HashMap<&str, &String> = HashMap::new();
+
+            let repo_kind = String::from("image");
+            let empty = String::from("");
+            let desc = repo.description.as_ref().unwrap_or(&empty);
+            let default_visibility = String::from("public");
+            body.insert("description", desc);
+            body.insert("repo_kind", &repo_kind);
+            body.insert("namespace", &self.quay_organization);
+            body.insert("repository", &repo.name);
+            body.insert(
+                "visibility",
+                repo.visibility.as_ref().unwrap_or(&default_visibility),
+            );
+
+            //body.insert("unstructured_metadata", empty);
+
+            let description = format!(
+                "Creating repository '{}' for organization '{}'",
+                repo.name, &self.quay_organization
+            );
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &description,
+                    Method::POST,
+                )
+                .await?;
+
+           
+
+            Ok(response.clone())
         }
     }
 
@@ -202,14 +286,13 @@ pub mod organization_struct {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Repository {
         #[serde(rename = "name")]
-        name: String,
+        pub name: String,
 
         #[serde(rename = "description")]
         description: Option<String>,
 
         #[serde(rename = "visibility")]
         visibility: Option<String>,
-
 
         #[serde(rename = "mirror")]
         mirror: bool,
@@ -218,7 +301,7 @@ pub mod organization_struct {
         mirror_params: Option<MirrorParams>,
 
         #[serde(rename = "permissions")]
-        permissions: Option<Permissions>,
+        pub permissions: Option<Permissions>,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -248,22 +331,22 @@ pub mod organization_struct {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Permissions {
         #[serde(rename = "robots")]
-        robots: Vec<UserElement>,
+        pub robots: Vec<UserElement>,
 
         #[serde(rename = "users")]
-        users: Vec<UserElement>,
+        pub users: Vec<UserElement>,
 
         #[serde(rename = "teams")]
-        teams: Option<Vec<UserElement>>,
+        pub teams: Option<Vec<UserElement>>,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct UserElement {
         #[serde(rename = "name")]
-        name: String,
+        pub name: String,
 
         #[serde(rename = "role")]
-        role: String,
+        pub role: String,
     }
 
     #[derive(Serialize, Deserialize, Debug)]

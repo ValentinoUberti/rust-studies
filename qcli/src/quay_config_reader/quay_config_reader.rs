@@ -2,7 +2,6 @@ use super::organization_struct::organization_struct::OrganizationYaml;
 use std::{fs::File, sync::Arc};
 use tokio::fs::read_dir;
 
-
 #[derive(Debug, Default)]
 pub struct QuayXmlConfig {
     organization: Vec<OrganizationYaml>,
@@ -11,7 +10,6 @@ pub struct QuayXmlConfig {
 
 impl QuayXmlConfig {
     pub fn new(directory: String) -> Self {
-       
         Self {
             organization: vec![],
             directory,
@@ -19,7 +17,6 @@ impl QuayXmlConfig {
     }
 
     pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
-        
         let mut files = read_dir(self.directory.to_owned()).await?;
 
         while let Some(f) = files.next_entry().await? {
@@ -33,8 +30,7 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    pub fn get_organizations<>(&self) -> &Vec<OrganizationYaml> {
+    pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
         &self.organization
     }
-    
 }
