@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let orgs = config.get_organizations();
 
     for org in orgs {
-        println!("Added org: {}", org.quay_organization);
+        println!("Added config for organization: {}", org.quay_organization);
 
         handles_all_organizations.push(org.create_organization());
         handles_delete_organization.push(org.delete_organization());
@@ -111,9 +111,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let steps = org.repositories.len() as u64;
-        println!("{}",steps);
-       
+               
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
 
@@ -149,7 +147,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
 
     for result in results.await {
-        //print_result("Organization ->".to_string(), result);
+        print_result("Organization ->".to_string(), result);
         //pb.inc(1);
     }
     //pb.finish();
@@ -194,7 +192,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = join_all(handles_all_repositories);
 
     for result in results.await {
-        //print_result("Repository ->".to_string(), result);
+        print_result("Repository ->".to_string(), result);
     }
 
     println!("------------");
