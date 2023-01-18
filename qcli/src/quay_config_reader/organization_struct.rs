@@ -108,31 +108,51 @@ pub mod organization_struct {
                 )
                 .await?;
 
-           // println!("Current permissions for repo {} : {:?}",repo,response.response);
-           // println!("{}",StatusCode::OK);
+            println!("{} - {}", &self.quay_organization, repo);
             match response.status_code {
-
                 StatusCode::OK => {
-                    let obj = response.response.as_object().unwrap();
-                    
-                    println!("---------");
-                    
+                    let mut actual_repo_permissions: Permissions = Permissions::new();
 
-                    for (_,v) in obj["permissions"].as_object().unwrap().iter() {
-                        println!("Name: {:?}",v["name"].as_str());
-                        println!("Role: {:?}",v["role"].as_str());
-                        println!("Robot: {:?}",v["is_robot"].as_bool());
+                    //For users and robots
+                    if let Some(objs) = response.response.as_object() {
+                        if let Some(objs_permissions) = objs["permissions"].as_object() {
+                            for (_, v) in objs_permissions.iter() {
+                                if let Some(name) = v["name"].as_str() {
+                                    if let Some(role) = v["role"].as_str() {
+                                        if let Some(is_robot) = v["is_robot"].as_bool() {
+                                            if is_robot {
+                                                let single_robot_permission = UserElement::new(
+                                                    name.to_string(),
+                                                    role.to_string(),
+                                                );
+                                                actual_repo_permissions
+                                                    .robots
+                                                    .push(single_robot_permission);
+                                            } else {
+                                                let single_user_permission = UserElement::new(
+                                                    name.to_string(),
+                                                    role.to_string(),
+                                                );
+                                                actual_repo_permissions
+                                                    .users
+                                                    .push(single_user_permission);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
+                    println!("{:?}", actual_repo_permissions);
+                    println!("---------");
                 }
-                _ => {
-
-                }
-                
+                _ => {}
             }
 
             Ok(response.clone())
         }
+
         async fn add_user_to_team(
             &self,
             team: &String,
@@ -478,6 +498,16 @@ pub mod organization_struct {
         pub teams: Option<Vec<UserElement>>,
     }
 
+    impl Permissions {
+        pub fn new() -> Permissions {
+            Permissions {
+                robots: Vec::new(),
+                users: Vec::new(),
+                teams: Some(Vec::new()),
+            }
+        }
+    }
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct UserElement {
         #[serde(rename = "name")]
@@ -485,6 +515,12 @@ pub mod organization_struct {
 
         #[serde(rename = "role")]
         pub role: String,
+    }
+
+    impl UserElement {
+        pub fn new(name: String, role: String) -> UserElement {
+            UserElement { name, role }
+        }
     }
 
     #[derive(Serialize, Deserialize, Debug)]
