@@ -3,6 +3,7 @@ pub mod organization_struct {
 
     use async_trait::async_trait;
 
+    use futures::SinkExt;
     use reqwest::{Method, StatusCode};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
@@ -24,7 +25,7 @@ pub mod organization_struct {
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_extra_user_permission_from_repository(
             &self,
-            repo: &String,
+            repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_robot_permission_to_repository(
             &self,
@@ -91,11 +92,11 @@ pub mod organization_struct {
     impl Actions for OrganizationYaml {
         async fn delete_extra_user_permission_from_repository(
             &self,
-            repo: &String,
+            repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/",
-                &self.quay_endpoint, &self.quay_organization, repo,
+                &self.quay_endpoint, &self.quay_organization, repo.name,
             );
             let body = HashMap::new();
             let response = &self
@@ -108,7 +109,7 @@ pub mod organization_struct {
                 )
                 .await?;
 
-            println!("{} - {}", &self.quay_organization, repo);
+            println!("{} - {}", &self.quay_organization, repo.name);
             match response.status_code {
                 StatusCode::OK => {
                     let mut actual_repo_permissions: Permissions = Permissions::new();
@@ -146,6 +147,26 @@ pub mod organization_struct {
 
                     println!("{:?}", actual_repo_permissions);
                     println!("---------");
+                    let configured_repository = self.repositories.iter().find(|r| r == &repo);
+                    match configured_repository {
+                        Some(configured_repo) => {
+                            println!("Here {}",&self.quay_organization);
+                            
+                            let mut diff: Vec<UserElement> = actual_repo_permissions.users;
+                            println!("{:?}",diff);
+                            
+                            match configured_repo.permissions.as_ref() {
+                                Some(user) => {
+                                    for el_permission in &user.users {
+                                        diff.retain(|x| x != el_permission);
+                                    }
+                                    println!("{:?}",diff);
+                                }
+                                None => {}
+                            }
+                        }
+                        None => {}
+                    }
                 }
                 _ => {}
             }
@@ -441,7 +462,7 @@ pub mod organization_struct {
         pub teams: Vec<Team>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct Repository {
         #[serde(rename = "name")]
         pub name: String,
@@ -462,7 +483,7 @@ pub mod organization_struct {
         pub permissions: Option<Permissions>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
         src_registry: String,
@@ -486,7 +507,7 @@ pub mod organization_struct {
         is_enabled: bool,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct Permissions {
         #[serde(rename = "robots")]
         pub robots: Vec<UserElement>,
@@ -508,7 +529,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct UserElement {
         #[serde(rename = "name")]
         pub name: String,

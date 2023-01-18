@@ -117,7 +117,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
-            handles_all_extra_permissions.push(org.delete_extra_user_permission_from_repository(&repository.name));
+            handles_all_extra_permissions.push(org.delete_extra_user_permission_from_repository(&repository));
 
             if let Some(permissions) = &repository.permissions {
                 for robot in &permissions.robots {
