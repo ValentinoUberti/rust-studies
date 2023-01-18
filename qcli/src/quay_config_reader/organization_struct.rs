@@ -22,6 +22,10 @@ pub mod organization_struct {
             repo: &String,
             user: &UserElement,
         ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn delete_extra_user_permission_from_repository(
+            &self,
+            repo: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_robot_permission_to_repository(
             &self,
             repo: &String,
@@ -85,6 +89,50 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
+        async fn delete_extra_user_permission_from_repository(
+            &self,
+            repo: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/",
+                &self.quay_endpoint, &self.quay_organization, repo,
+            );
+            let body = HashMap::new();
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::GET,
+                )
+                .await?;
+
+           // println!("Current permissions for repo {} : {:?}",repo,response.response);
+           // println!("{}",StatusCode::OK);
+            match response.status_code {
+
+                StatusCode::OK => {
+                    let obj = response.response.as_object().unwrap();
+                    
+                    println!("---------");
+                    
+
+                    for (_,v) in obj["permissions"].as_object().unwrap().iter() {
+                        println!("Name: {:?}",v["name"].as_str());
+                        println!("Role: {:?}",v["role"].as_str());
+                        println!("Robot: {:?}",v["is_robot"].as_bool());
+                    }
+
+                }
+                _ => {
+
+                }
+                
+            }
+
+            Ok(response.clone())
+        }
         async fn add_user_to_team(
             &self,
             team: &String,

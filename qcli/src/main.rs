@@ -87,8 +87,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles_all_repositories = Vec::new();
     let mut handles_all_repositories_permissions = Vec::new();
     let mut handles_all_team_members = Vec::new();
+    let mut handles_all_extra_permissions= Vec::new();
 
     let orgs = config.get_organizations();
+
+    
 
     for org in orgs {
         println!("Added config for organization: {}", org.quay_organization);
@@ -114,6 +117,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
+            handles_all_extra_permissions.push(org.delete_extra_user_permission_from_repository(&repository.name));
 
             if let Some(permissions) = &repository.permissions {
                 for robot in &permissions.robots {
@@ -145,7 +149,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
     let results = join_all(handles_all_organizations);
     
-
+/*
     for result in results.await {
         print_result("Organization ->".to_string(), result);
         //pb.inc(1);
@@ -206,6 +210,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     for result in results.await {
         print_result("Repository permissions ->".to_string(), result);
     }
+*/
+    println!("------------");
+    // Create repositories permission
+    println!(
+        "Delete extra user and robot permission from {} repository cuncurrently",
+        handles_all_extra_permissions.len()
+    );
+    let results = join_all(handles_all_extra_permissions);
+
+    for result in results.await {
+        //print_result("Repository permissions ->".to_string(), result);
+    }
+
 
     /*
      let results = join_all(handles_delete_organization);
