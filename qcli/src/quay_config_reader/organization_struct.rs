@@ -3,7 +3,7 @@ pub mod organization_struct {
 
     use async_trait::async_trait;
 
-    use reqwest::{Method, Request, StatusCode};
+    use reqwest::{Method, StatusCode};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -17,12 +17,34 @@ pub mod organization_struct {
     #[async_trait]
     pub trait Actions {
         async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn grant_user_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn grant_robot_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn grant_team_permission_to_repository(&self, repo: &String, user: &UserElement) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_user_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_robot_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn grant_team_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn add_user_to_team(
+            &self,
+            team: &String,
+            user: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn add_robot_to_team(
+            &self,
+            team: &String,
+            user: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_repository(
             &self,
             team: &Repository,
@@ -63,13 +85,17 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
+        async fn add_user_to_team(
+            &self,
+            team: &String,
+            user: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/team/{}/members/{}",
+                &self.quay_endpoint, &self.quay_organization, team, user
+            );
+            let body = HashMap::new();
 
-        async fn grant_user_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
-
-            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/user/{}", &self.quay_endpoint,&self.quay_organization,repo,user.name);
-            let mut body = HashMap::new();
-            body.insert("role",&user.role);
-            
             let response = &self
                 .send_request(
                     endpoint,
@@ -82,13 +108,20 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        
-        async fn grant_team_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
+        async fn add_robot_to_team(
+            &self,
+            team: &String,
+            robot: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/team/{}/members/{}",
+                &self.quay_endpoint,
+                &self.quay_organization,
+                team,
+                format!("{}+{}", &self.quay_organization, robot)
+            );
+            let body = HashMap::new();
 
-            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/team/{}", &self.quay_endpoint,&self.quay_organization,repo,user.name);
-            let mut body = HashMap::new();
-            body.insert("role",&user.role);
-            
             let response = &self
                 .send_request(
                     endpoint,
@@ -101,12 +134,71 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        async fn grant_robot_permission_to_repository(&self, repo: &String,user: &UserElement) -> Result<QuayResponse, Box<dyn Error>> {
 
-            let endpoint = format!("https://{}/api/v1/repository/{}/{}/permissions/user/{}", &self.quay_endpoint,&self.quay_organization,repo,format!("{}+{}",&self.quay_organization,user.name));
+        async fn grant_user_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
             let mut body = HashMap::new();
-            body.insert("role",&user.role);
-            
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
+        async fn grant_team_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+        async fn grant_robot_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint,
+                &self.quay_organization,
+                repo,
+                format!("{}+{}", &self.quay_organization, user.name)
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
             let response = &self
                 .send_request(
                     endpoint,
@@ -247,8 +339,6 @@ pub mod organization_struct {
                 )
                 .await?;
 
-           
-
             Ok(response.clone())
         }
     }
@@ -361,13 +451,13 @@ pub mod organization_struct {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Team {
         #[serde(rename = "name")]
-        name: String,
+        pub name: String,
 
         #[serde(rename = "description")]
         description: String,
 
         #[serde(rename = "members")]
-        members: Members,
+        pub members: Members,
 
         #[serde(rename = "role")]
         role: String,
@@ -376,9 +466,9 @@ pub mod organization_struct {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Members {
         #[serde(rename = "users")]
-        users: Vec<String>,
+        pub users: Vec<String>,
 
         #[serde(rename = "robots")]
-        robots: Vec<String>,
+        pub robots: Vec<String>,
     }
 }

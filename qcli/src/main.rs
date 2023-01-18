@@ -1,17 +1,22 @@
 #![deny(elided_lifetimes_in_paths)]
 mod quay_config_reader;
-use clap::Parser;
-use console_subscriber::spawn;
-use futures::future::join_all;
-use std::error::Error;
+use clap::{Args, Parser, Subcommand};
+//use console_subscriber::spawn;
+use futures::{
+    future::{join_all},
+    
+};
+
+use quay_config_reader::organization_struct::organization_struct::QuayResponse;
+use std::{error::Error};
 //use console_subscriber;
 
 use crate::quay_config_reader::{
-    organization_struct::organization_struct::{Actions, UserElement},
+    organization_struct::organization_struct::{Actions},
     quay_config_reader::QuayXmlConfig,
 };
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(author, version, about="Quay batch processing cli written in Rust", long_about = None)]
 #[command(help_template(
     "\
@@ -22,35 +27,73 @@ use crate::quay_config_reader::{
 {all-args}{after-help}
 "
 ))]
-struct Args {
+struct Cli {
     #[arg(short, long)]
     dir: String,
 
     #[arg(short, long)]
     authfile: String,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Adds files to myapp
+    Create(Create),
+    Delete(Delete),
+}
+
+#[derive(Args)]
+struct Create {}
+
+#[derive(Args)]
+struct Delete {}
+
+fn print_result(description: String, result: Result<QuayResponse, Box<dyn Error>>) {
+    match result {
+        Ok(r) => {
+            println!("------------------------");
+            println!("{} {}", description, r.description);
+            println!("Status code: {}", r.status_code);
+            println!("Message: {}", r.response);
+        }
+        Err(e) => println!("Error: {}", e),
+    }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();
-    let args = Args::parse();
-    let mut config = QuayXmlConfig::new(args.dir);
+    let cli = Cli::parse();
+    let mut config = QuayXmlConfig::new(cli.dir);
+
+    match &cli.command {
+        Commands::Create(_) => {
+            println!("Create")
+        }
+        Commands::Delete(_) => {
+            println!("Delete")
+        }
+    }
 
     config.load_config().await?;
 
-    let mut handles = Vec::new();
+    let mut handles_all_organizations = Vec::new();
     let mut handles_delete_organization = Vec::new();
     let mut handles_all_robots = Vec::new();
     let mut handles_all_teams = Vec::new();
     let mut handles_all_repositories = Vec::new();
     let mut handles_all_repositories_permissions = Vec::new();
+    let mut handles_all_team_members = Vec::new();
 
     let orgs = config.get_organizations();
 
     for org in orgs {
         println!("Added org: {}", org.quay_organization);
 
-        handles.push(org.create_organization());
+        handles_all_organizations.push(org.create_organization());
         handles_delete_organization.push(org.delete_organization());
 
         for robot in &org.robots {
@@ -58,7 +101,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         for team in &org.teams {
             handles_all_teams.push(org.create_team(team));
+
+            for member in &team.members.users {
+                handles_all_team_members.push(org.add_user_to_team(&team.name, &member))
+            }
+
+            for member in &team.members.robots {
+                handles_all_team_members.push(org.add_robot_to_team(&team.name, &member))
+            }
         }
+
+        let steps = org.repositories.len() as u64;
+        println!("{}",steps);
+       
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
 
@@ -84,19 +139,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("------------");
     // Create organization
-    let results = join_all(handles);
+    println!(
+        "Creating {} organization cuncurrently",
+        handles_all_organizations.len()
+    );
+
+    
+    let results = join_all(handles_all_organizations);
+    
 
     for result in results.await {
-        match result {
-            Ok(r) => {
-                println!("------------------------");
-                println!("Creating organization {}", r.description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
-            }
-            Err(e) => println!("Error: {}", e),
-        }
+        //print_result("Organization ->".to_string(), result);
+        //pb.inc(1);
     }
+    //pb.finish();
 
     println!("------------");
     // Create robots
@@ -104,15 +160,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = join_all(handles_all_robots);
 
     for result in results.await {
-        match result {
-            Ok(r) => {
-                println!("------------------------");
-                println!("{}", r.description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
-            }
-            Err(e) => println!("Error: {}", e),
-        }
+        print_result("Robots ->".to_string(), result);
     }
 
     println!("------------");
@@ -121,15 +169,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = join_all(handles_all_teams);
 
     for result in results.await {
-        match result {
-            Ok(r) => {
-                println!("------------------------");
-                println!("{}", r.description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
-            }
-            Err(e) => println!("Error: {}", e),
-        }
+        print_result("Teams ->".to_string(), result);
+    }
+
+    println!("------------");
+    // Adding team members
+    println!(
+        "Adding {} team members cuncurrently",
+        handles_all_team_members.len()
+    );
+    let results = join_all(handles_all_team_members);
+
+    for result in results.await {
+        print_result("Team members ->".to_string(), result);
     }
 
     println!("------------");
@@ -138,22 +190,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "Creating {} repositories cuncurrently",
         handles_all_repositories.len()
     );
+
     let results = join_all(handles_all_repositories);
 
     for result in results.await {
-        match result {
-            Ok(r) => {
-                println!("------------------------");
-                println!("{}", r.description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
-            }
-            Err(e) => println!("Error: {}", e),
-        }
+        //print_result("Repository ->".to_string(), result);
     }
 
     println!("------------");
-    // Create repositories
+    // Create repositories permission
     println!(
         "Creating {} repositories permissions cuncurrently",
         handles_all_repositories_permissions.len()
@@ -161,15 +206,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = join_all(handles_all_repositories_permissions);
 
     for result in results.await {
-        match result {
-            Ok(r) => {
-                println!("------------------------");
-                println!("{}", r.description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
-            }
-            Err(e) => println!("Error: {}", e),
-        }
+        print_result("Repository permissions ->".to_string(), result);
     }
 
     /*
