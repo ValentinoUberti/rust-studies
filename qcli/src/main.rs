@@ -2,18 +2,14 @@
 mod quay_config_reader;
 use clap::{Args, Parser, Subcommand};
 //use console_subscriber::spawn;
-use futures::{
-    future::{join_all},
-    
-};
+use futures::future::join_all;
 
 use quay_config_reader::organization_struct::organization_struct::QuayResponse;
-use std::{error::Error};
+use std::error::Error;
 //use console_subscriber;
 
 use crate::quay_config_reader::{
-    organization_struct::organization_struct::{Actions},
-    quay_config_reader::QuayXmlConfig,
+    organization_struct::organization_struct::Actions, quay_config_reader::QuayXmlConfig,
 };
 
 #[derive(Parser)]
@@ -87,11 +83,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles_all_repositories = Vec::new();
     let mut handles_all_repositories_permissions = Vec::new();
     let mut handles_all_team_members = Vec::new();
-    let mut handles_all_extra_user_permissions= Vec::new();
+    let mut handles_all_extra_user_permissions = Vec::new();
     let mut handles_all_extra_team_permissions = Vec::new();
     let orgs = config.get_organizations();
-
-    
 
     for org in orgs {
         println!("Added config for organization: {}", org.quay_organization);
@@ -114,11 +108,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-               
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
-            handles_all_extra_user_permissions.push(org.get_user_permission_from_repository(&repository));
-            handles_all_extra_team_permissions.push(org.get_team_permission_from_repository(&repository));
+            handles_all_extra_user_permissions
+                .push(org.get_user_permission_from_repository(&repository));
+            handles_all_extra_team_permissions
+                .push(org.get_team_permission_from_repository(&repository));
 
             if let Some(permissions) = &repository.permissions {
                 for robot in &permissions.robots {
@@ -139,7 +134,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-/*
+
     println!("------------");
     // Create organization
     println!(
@@ -147,9 +142,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         handles_all_organizations.len()
     );
 
-    
     let results = join_all(handles_all_organizations);
-    
 
     for result in results.await {
         print_result("Organization ->".to_string(), result);
@@ -201,6 +194,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("------------");
+    //  Get user currently repositories permission (IF ANY)
+    println!(
+        "Delete extra user and robot permission from {} repository cuncurrently",
+        handles_all_extra_user_permissions.len()
+    );
+    let results = join_all(handles_all_extra_user_permissions);
+
+    for result in results.await {
+        //print_result("Repository USER permissions ->".to_string(), result);
+    }
+
+    println!("------------");
+    // Get currently team repositories permission (IF ANY)
+    println!(
+        "Delete extra team permission from {} repository cuncurrently",
+        handles_all_extra_team_permissions.len()
+    );
+    let results = join_all(handles_all_extra_team_permissions);
+
+    for result in results.await {
+        print_result("Repository TEAM permissions ->".to_string(), result);
+    }
+    println!("------------");
     // Create repositories permission
     println!(
         "Creating {} repositories permissions cuncurrently",
@@ -210,30 +226,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     for result in results.await {
         print_result("Repository permissions ->".to_string(), result);
-    }
-
-    println!("------------");
-    // Get user repositories permission
-    println!(
-        "Delete extra user and robot permission from {} repository cuncurrently",
-        handles_all_extra_user_permissions.len()
-    );
-    let results = join_all(handles_all_extra_user_permissions);
-
-    for result in results.await {
-        //print_result("Repository permissions ->".to_string(), result);
-    }
-*/
-    println!("------------");
-    // Get team repositories permission
-    println!(
-        "Delete extra team permission from {} repository cuncurrently",
-        handles_all_extra_team_permissions.len()
-    );
-    let results = join_all(handles_all_extra_team_permissions);
-
-    for result in results.await {
-        //print_result("Repository permissions ->".to_string(), result);
     }
 
     /*

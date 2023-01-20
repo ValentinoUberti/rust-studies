@@ -6,20 +6,499 @@ Added config for organization: exampleorg6
 Added config for organization: exampleorg5
 Added config for organization: exampleorg4
 ------------
-Delete extra team permission from 19 repository cuncurrently
+Creating 6 organization cuncurrently
+------------------------
+Organization -> exampleorg
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Organization -> exampleorg2
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Organization -> exampleorg3
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Organization -> exampleorg6
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Organization -> exampleorg5
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Organization -> exampleorg4
+Status code: 400 Bad Request
+Message: {"detail":"A user or organization with this name already exists","error_message":"A user or organization with this name already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------
+Creating 13 robots cuncurrently
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg+writer"}
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg2'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg2+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg2'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg2+writer"}
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg3'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg3+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg3'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg3+writer"}
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg6+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg6+writer"}
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg5+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg5+writer"}
+------------------------
+Robots -> Creating robot 'giorgiaaaa' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg5+giorgiaaaa"}
+------------------------
+Robots -> Creating robot 'reader' for organization 'exampleorg4'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg4+reader"}
+------------------------
+Robots -> Creating robot 'writer' for organization 'exampleorg4'
+Status code: 400 Bad Request
+Message: {"message":"Existing robot with name: exampleorg4+writer"}
+------------
+Creating 6 teams cuncurrently
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg2'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg3'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg6'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg5'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------------------
+Teams -> Creating team 'maintainers' for organization 'exampleorg4'
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"can_view":true,"description":"","name":"maintainers","new_team":false,"role":"member"}
+------------
+Adding 12 team members cuncurrently
+------------------------
+Team members -> exampleorg
+Status code: 400 Bad Request
+Message: {"message":"User valeidm is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg+writer is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg2
+Status code: 400 Bad Request
+Message: {"message":"User valeidm is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg2
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg2+writer is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg3
+Status code: 400 Bad Request
+Message: {"message":"User valeidm is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg3
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg3+writer is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg6
+Status code: 400 Bad Request
+Message: {"message":"User valeidm is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg6
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg6+writer is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg5
+Status code: 400 Bad Request
+Message: {"detail":"Cannot call this method on an auth-synced team","error_message":"Cannot call this method on an auth-synced team","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Team members -> exampleorg5
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg5+writer is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg4
+Status code: 400 Bad Request
+Message: {"message":"User valeidm is already a member of team maintainers"}
+------------------------
+Team members -> exampleorg4
+Status code: 400 Bad Request
+Message: {"message":"User exampleorg4+writer is already a member of team maintainers"}
+------------
+Creating 19 repositories cuncurrently
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg2'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg2'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg2'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg3'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg3'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg3'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine2' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg6'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg5'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'alpine' for organization 'exampleorg4'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'demorepo' for organization 'exampleorg4'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------------------
+Repository -> Creating repository 'nested/demorepo' for organization 'exampleorg4'
+Status code: 400 Bad Request
+Message: {"detail":"Repository already exists","error_message":"Repository already exists","error_type":"invalid_request","status":400,"title":"invalid_request","type":"https://example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb/api/v1/error/invalid_request"}
+------------
+Delete extra user and robot permission from 19 repository cuncurrently
+
+####################
+Organization exampleorg :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg3 :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg2 :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg2 :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg :: Repository: demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
+
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
 
 ####################
 Organization exampleorg2 :: Repository: demorepo 
 ####################
 
-Actual permissions: []
 ---------
-Actual TEAMS permissions []
-Difference TEAMS permissions []
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
 
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
 
 ####################
-Organization exampleorg :: Repository: alpine 
+Organization exampleorg3 :: Repository: demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
+
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg3 :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg6 :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg6 :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg6 :: Repository: alpine2 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg4 :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg5 :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg5 :: Repository: nested/demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg4 :: Repository: alpine 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Difference USER permissions []
+
+Actual ROBOTS permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Wanted ROBOT permissions [UserElement { name: "reader", role: "read" }, UserElement { name: "writer", role: "write" }]
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg6 :: Repository: demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
+
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg4 :: Repository: demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
+
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
+
+####################
+Organization exampleorg5 :: Repository: demorepo 
+####################
+
+---------
+Actual USERS permissions [UserElement { name: "valeidm", role: "admin" }]
+Wanted USERS permissions: NONE
+--> The admin user is not being counted.
+Difference USER permissions []
+
+Actual ROBOTS permissions []
+Wanted ROBOT permissions: NONE
+Difference ROBOTS permissions []
+------------
+Delete extra team permission from 19 repository cuncurrently
+
+####################
+Organization exampleorg3 :: Repository: alpine 
 ####################
 
 Actual permissions: [UserElement { name: "maintainers", role: "admin" }]
@@ -40,6 +519,16 @@ Difference TEAMS permissions []
 
 
 ####################
+Organization exampleorg6 :: Repository: alpine2 
+####################
+
+Actual permissions: [UserElement { name: "maintainers", role: "read" }]
+---------
+Actual TEAMS permissions [UserElement { name: "maintainers", role: "read" }]
+Wanted TEAMS permissions Some([UserElement { name: "maintainers", role: "admin" }])
+Difference TEAMS permissions [UserElement { name: "maintainers", role: "read" }]
+
+####################
 Organization exampleorg6 :: Repository: demorepo 
 ####################
 
@@ -50,7 +539,18 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg3 :: Repository: demorepo 
+Organization exampleorg :: Repository: alpine 
+####################
+
+Actual permissions: [UserElement { name: "maintainers", role: "admin" }]
+---------
+Actual TEAMS permissions [UserElement { name: "maintainers", role: "admin" }]
+Wanted TEAMS permissions Some([UserElement { name: "maintainers", role: "admin" }])
+Difference TEAMS permissions []
+
+
+####################
+Organization exampleorg :: Repository: nested/demorepo 
 ####################
 
 Actual permissions: []
@@ -71,18 +571,7 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg6 :: Repository: alpine2 
-####################
-
-Actual permissions: [UserElement { name: "maintainers", role: "read" }]
----------
-Actual TEAMS permissions [UserElement { name: "maintainers", role: "read" }]
-Wanted TEAMS permissions Some([UserElement { name: "maintainers", role: "admin" }])
-Difference TEAMS permissions [UserElement { name: "maintainers", role: "read" }]
-
-
-####################
-Organization exampleorg :: Repository: nested/demorepo 
+Organization exampleorg3 :: Repository: demorepo 
 ####################
 
 Actual permissions: []
@@ -92,48 +581,7 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg4 :: Repository: demorepo 
-####################
-
-Actual permissions: []
----------
-Actual TEAMS permissions []
-Difference TEAMS permissions []
-
-
-####################
-Organization exampleorg6 :: Repository: alpine 
-####################
-
-Actual permissions: [UserElement { name: "maintainers", role: "admin" }]
----------
-Actual TEAMS permissions [UserElement { name: "maintainers", role: "admin" }]
-Wanted TEAMS permissions Some([UserElement { name: "maintainers", role: "admin" }])
-Difference TEAMS permissions []
-
-
-####################
-Organization exampleorg6 :: Repository: nested/demorepo 
-####################
-
-Actual permissions: []
----------
-Actual TEAMS permissions []
-Difference TEAMS permissions []
-
-
-####################
-Organization exampleorg3 :: Repository: nested/demorepo 
-####################
-
-Actual permissions: []
----------
-Actual TEAMS permissions []
-Difference TEAMS permissions []
-
-
-####################
-Organization exampleorg3 :: Repository: alpine 
+Organization exampleorg4 :: Repository: alpine 
 ####################
 
 Actual permissions: [UserElement { name: "maintainers", role: "admin" }]
@@ -155,7 +603,17 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg5 :: Repository: nested/demorepo 
+Organization exampleorg4 :: Repository: demorepo 
+####################
+
+Actual permissions: []
+---------
+Actual TEAMS permissions []
+Difference TEAMS permissions []
+
+
+####################
+Organization exampleorg6 :: Repository: nested/demorepo 
 ####################
 
 Actual permissions: []
@@ -175,7 +633,7 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg4 :: Repository: nested/demorepo 
+Organization exampleorg2 :: Repository: demorepo 
 ####################
 
 Actual permissions: []
@@ -185,13 +643,34 @@ Difference TEAMS permissions []
 
 
 ####################
-Organization exampleorg4 :: Repository: alpine 
+Organization exampleorg3 :: Repository: nested/demorepo 
+####################
+
+Actual permissions: []
+---------
+Actual TEAMS permissions []
+Difference TEAMS permissions []
+
+
+
+####################
+Organization exampleorg6 :: Repository: alpine 
 ####################
 
 Actual permissions: [UserElement { name: "maintainers", role: "admin" }]
 ---------
 Actual TEAMS permissions [UserElement { name: "maintainers", role: "admin" }]
 Wanted TEAMS permissions Some([UserElement { name: "maintainers", role: "admin" }])
+Difference TEAMS permissions []
+
+
+####################
+Organization exampleorg4 :: Repository: nested/demorepo 
+####################
+
+Actual permissions: []
+---------
+Actual TEAMS permissions []
 Difference TEAMS permissions []
 
 
@@ -204,3 +683,251 @@ Actual permissions: []
 Actual TEAMS permissions []
 Difference TEAMS permissions []
 
+
+####################
+Organization exampleorg5 :: Repository: nested/demorepo 
+####################
+
+Actual permissions: []
+---------
+Actual TEAMS permissions []
+Difference TEAMS permissions []
+
+------------------------
+Repository TEAM permissions -> exampleorg
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg2
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg2
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg2
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg3
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg3
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg3
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg6
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg6
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"read"}}}
+------------------------
+Repository TEAM permissions -> exampleorg6
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg6
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg5
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg5
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg5
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg4
+Status code: 200 OK
+Message: {"permissions":{"maintainers":{"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}}}
+------------------------
+Repository TEAM permissions -> exampleorg4
+Status code: 200 OK
+Message: {"permissions":{}}
+------------------------
+Repository TEAM permissions -> exampleorg4
+Status code: 200 OK
+Message: {"permissions":{}}
+------------
+Creating 40 repositories permissions cuncurrently
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#ad494a","hash":"9d9c09031cd6fd095712893632096705bca7de5051dd72cf44571a1816d23e69","kind":"robot","name":"exampleorg+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#7f7f7f","hash":"cea6e293aaf84e7222560da6331c10eaff883f5235eb690a4fe0b3a7484a493c","kind":"robot","name":"exampleorg+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#7f7f7f","hash":"cea6e293aaf84e7222560da6331c10eaff883f5235eb690a4fe0b3a7484a493c","kind":"robot","name":"exampleorg+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#31a354","hash":"f9ab165c2d6b24cc308a2db1493d0bc3b01ea3ffa28638ec4f57e61486754604","kind":"robot","name":"exampleorg2+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg2+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#b5cf6b","hash":"5a4a19005e454945c858b0c09c53406397b13a7752945b965caa347721c6375b","kind":"robot","name":"exampleorg2+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg2+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#b5cf6b","hash":"5a4a19005e454945c858b0c09c53406397b13a7752945b965caa347721c6375b","kind":"robot","name":"exampleorg2+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg2+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg2
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#aec7e8","hash":"2173ac349119b4e0bd13942a34a5a00d04377b4984ebba2700414f75ea51f71c","kind":"robot","name":"exampleorg3+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg3+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#98df8a","hash":"e5cc0858d06a8f358dc6adbef14f370e98dca5d628dd926e36701958131203d5","kind":"robot","name":"exampleorg3+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg3+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#98df8a","hash":"e5cc0858d06a8f358dc6adbef14f370e98dca5d628dd926e36701958131203d5","kind":"robot","name":"exampleorg3+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg3+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg3
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#6b6ecf","hash":"f675da96d255622e95f4efb5d03ca32fcd6ae794f0474b65527d31f8d21a2993","kind":"robot","name":"exampleorg6+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg6+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#ad494a","hash":"7d7dbc7dee760e9108dad7c800823d213638f330645551f7fb17d417d1ab2a25","kind":"robot","name":"exampleorg6+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg6+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#6b6ecf","hash":"f675da96d255622e95f4efb5d03ca32fcd6ae794f0474b65527d31f8d21a2993","kind":"robot","name":"exampleorg6+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg6+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#ad494a","hash":"7d7dbc7dee760e9108dad7c800823d213638f330645551f7fb17d417d1ab2a25","kind":"robot","name":"exampleorg6+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg6+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#ad494a","hash":"7d7dbc7dee760e9108dad7c800823d213638f330645551f7fb17d417d1ab2a25","kind":"robot","name":"exampleorg6+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg6+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg6
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#393b79","hash":"74fa8853d9929e5160eae21a0a40fef4f830dd426a5aeb2d878737bf9c131d78","kind":"robot","name":"exampleorg5+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg5+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#aec7e8","hash":"2155dd59174c5b8e2daaf0f57df838c6c4d9bf314e7aed7235c102ab2c6913bb","kind":"robot","name":"exampleorg5+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg5+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#aec7e8","hash":"2155dd59174c5b8e2daaf0f57df838c6c4d9bf314e7aed7235c102ab2c6913bb","kind":"robot","name":"exampleorg5+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg5+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg5
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"0378e95c756177c4e57d9798821ae81ed8851a4132f571344de945c91c78c972","kind":"robot","name":"exampleorg4+reader"},"is_org_member":true,"is_robot":true,"name":"exampleorg4+reader","role":"read"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"4376792b538669f86ace543c748fb6ea67c64b111b9cad7d2b6919befce94450","kind":"robot","name":"exampleorg4+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg4+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"23cf4ac7772729232936a0f4437a15fd33795acf2ccf69f3a7e22194c3601ec4","kind":"team","name":"maintainers"},"name":"maintainers","role":"admin"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#ffbb78","hash":"4376792b538669f86ace543c748fb6ea67c64b111b9cad7d2b6919befce94450","kind":"robot","name":"exampleorg4+writer"},"is_org_member":true,"is_robot":true,"name":"exampleorg4+writer","role":"write"}
+------------------------
+Repository permissions -> exampleorg4
+Status code: 200 OK
+Message: {"avatar":{"color":"#9ecae1","hash":"f8e826279b719090e15df49e717e37922f75999aec41b31de884b79359a21198","kind":"user","name":"valeidm"},"is_org_member":true,"is_robot":false,"name":"valeidm","role":"admin"}

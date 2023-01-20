@@ -28,6 +28,12 @@ pub mod organization_struct {
             repo: &String,
             user: &UserElement,
         ) -> Result<QuayResponse, Box<dyn Error>>;
+
+        async fn delete_team_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn get_user_permission_from_repository(
             &self,
             repo: &Repository,
@@ -301,12 +307,12 @@ pub mod organization_struct {
                                 println!("Difference TEAMS permissions {:?}", diff_teams);
                            
 
-                            /*
-                            for user in diff_users {
-                                self.delete_user_permission_from_repository(&repo.name, &user)
+                          
+                            for team in diff_teams {
+                                self.delete_team_permission_from_repository(&repo.name, &team)
                                     .await?;
                             }
-                            */
+                            
                             println!();
                         }
                         None => { println!("No teams present")}
@@ -399,6 +405,31 @@ pub mod organization_struct {
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::DELETE,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
+        async fn delete_team_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
                 &self.quay_endpoint, &self.quay_organization, repo, user.name
             );
             let mut body = HashMap::new();
