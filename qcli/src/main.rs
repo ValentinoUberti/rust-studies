@@ -87,8 +87,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles_all_repositories = Vec::new();
     let mut handles_all_repositories_permissions = Vec::new();
     let mut handles_all_team_members = Vec::new();
-    let mut handles_all_extra_permissions= Vec::new();
-
+    let mut handles_all_extra_user_permissions= Vec::new();
+    let mut handles_all_extra_team_permissions = Vec::new();
     let orgs = config.get_organizations();
 
     
@@ -117,7 +117,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                
         for repository in &org.repositories {
             handles_all_repositories.push(org.create_repository(repository));
-            handles_all_extra_permissions.push(org.search_extra_user_permission_from_repository(&repository));
+            handles_all_extra_user_permissions.push(org.get_user_permission_from_repository(&repository));
+            handles_all_extra_team_permissions.push(org.get_team_permission_from_repository(&repository));
 
             if let Some(permissions) = &repository.permissions {
                 for robot in &permissions.robots {
@@ -138,7 +139,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-
+/*
     println!("------------");
     // Create organization
     println!(
@@ -212,17 +213,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("------------");
-    // Create repositories permission
+    // Get user repositories permission
     println!(
         "Delete extra user and robot permission from {} repository cuncurrently",
-        handles_all_extra_permissions.len()
+        handles_all_extra_user_permissions.len()
     );
-    let results = join_all(handles_all_extra_permissions);
+    let results = join_all(handles_all_extra_user_permissions);
 
     for result in results.await {
         //print_result("Repository permissions ->".to_string(), result);
     }
+*/
+    println!("------------");
+    // Get team repositories permission
+    println!(
+        "Delete extra team permission from {} repository cuncurrently",
+        handles_all_extra_team_permissions.len()
+    );
+    let results = join_all(handles_all_extra_team_permissions);
 
+    for result in results.await {
+        //print_result("Repository permissions ->".to_string(), result);
+    }
 
     /*
      let results = join_all(handles_delete_organization);

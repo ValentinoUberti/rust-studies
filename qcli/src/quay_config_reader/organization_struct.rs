@@ -28,7 +28,11 @@ pub mod organization_struct {
             repo: &String,
             user: &UserElement,
         ) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn search_extra_user_permission_from_repository(
+        async fn get_user_permission_from_repository(
+            &self,
+            repo: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn get_team_permission_from_repository(
             &self,
             repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>>;
@@ -95,7 +99,7 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
-        async fn search_extra_user_permission_from_repository(
+        async fn get_user_permission_from_repository(
             &self,
             repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>> {
@@ -188,7 +192,8 @@ pub mod organization_struct {
                             println!("Difference USER permissions {:?}", diff_users);
 
                             for user in diff_users {
-                                self.delete_user_permission_from_repository(&repo.name, &user).await?;
+                                self.delete_user_permission_from_repository(&repo.name, &user)
+                                    .await?;
                             }
 
                             println!();
@@ -227,6 +232,91 @@ pub mod organization_struct {
             Ok(response.clone())
         }
 
+        async fn get_team_permission_from_repository(
+            &self,
+            repo: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/team/",
+                &self.quay_endpoint, &self.quay_organization, repo.name,
+            );
+            let body = HashMap::new();
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::GET,
+                )
+                .await?;
+
+            //println!("{} - {}", &self.quay_organization, repo.name);
+            match response.status_code {
+                StatusCode::OK => {
+                    let mut actual_repo_permissions= Vec::new();
+                    println!();
+                    println!("####################");
+                    println!(
+                        "Organization {} :: Repository: {} ",
+                        &self.quay_organization, repo.name
+                    );
+                    println!("####################");
+                    println!();
+                    //For team
+                    if let Some(objs) = response.response.as_object() {
+                        if let Some(objs_permissions) = objs["permissions"].as_object() {
+                            for (_, v) in objs_permissions.iter() {
+                                if let Some(name) = v["name"].as_str() {
+                                    if let Some(role) = v["role"].as_str() {
+                                        let single_team_permission =
+                                            UserElement::new(name.to_string(), role.to_string());
+                                        actual_repo_permissions.push(single_team_permission);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    println!("Actual permissions: {:?}", actual_repo_permissions);
+                    println!("---------");
+                    let configured_repository = self.repositories.iter().find(|r| r == &repo);
+                    //println!("{:?}",configured_repository);
+                    match configured_repository {
+                        Some(configured_repo) => {
+                           
+                                println!("Actual TEAMS permissions {:?}", actual_repo_permissions);
+
+                                let mut diff_teams = actual_repo_permissions;
+                                if let Some(user) = configured_repo.permissions.as_ref() {
+                                    
+                                    if let Some(teams) = &user.teams {
+                                        for el_permission in teams {
+                                            diff_teams.retain(|x| x != el_permission);
+                                        }
+                                        println!("Wanted TEAMS permissions {:?}", &user.teams);
+                                    }
+                                }
+
+                                println!("Difference TEAMS permissions {:?}", diff_teams);
+                           
+
+                            /*
+                            for user in diff_users {
+                                self.delete_user_permission_from_repository(&repo.name, &user)
+                                    .await?;
+                            }
+                            */
+                            println!();
+                        }
+                        None => { println!("No teams present")}
+                    }
+                }
+                _ => {}
+            }
+
+            Ok(response.clone())
+        }
         async fn add_user_to_team(
             &self,
             team: &String,
