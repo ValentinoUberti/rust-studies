@@ -1,7 +1,7 @@
 pub mod organization_struct {
-    use std::{collections::HashMap, error::Error, time::Duration};
-
     use async_trait::async_trait;
+    use std::{collections::HashMap, error::Error, time::Duration};
+    use substring::Substring;
 
     use futures::SinkExt;
     use reqwest::{Method, StatusCode};
@@ -109,11 +109,18 @@ pub mod organization_struct {
                 )
                 .await?;
 
-            println!("{} - {}", &self.quay_organization, repo.name);
+            //println!("{} - {}", &self.quay_organization, repo.name);
             match response.status_code {
                 StatusCode::OK => {
                     let mut actual_repo_permissions: Permissions = Permissions::new();
-
+                    println!();
+                    println!("####################");
+                    println!(
+                        "Organization {} :: Repository: {} ",
+                        &self.quay_organization, repo.name
+                    );
+                    println!("####################");
+                    println!();
                     //For users and robots
                     if let Some(objs) = response.response.as_object() {
                         if let Some(objs_permissions) = objs["permissions"].as_object() {
@@ -123,7 +130,12 @@ pub mod organization_struct {
                                         if let Some(is_robot) = v["is_robot"].as_bool() {
                                             if is_robot {
                                                 let single_robot_permission = UserElement::new(
-                                                    name.to_string(),
+                                                    name.to_string()
+                                                        .substring(
+                                                            self.quay_organization.len() + 1,
+                                                            name.len(),
+                                                        )
+                                                        .to_string(),
                                                     role.to_string(),
                                                 );
                                                 actual_repo_permissions
@@ -145,25 +157,50 @@ pub mod organization_struct {
                         }
                     }
 
-                    println!("{:?}", actual_repo_permissions);
+                    //println!("Actual permissions: {:?}", actual_repo_permissions);
                     println!("---------");
                     let configured_repository = self.repositories.iter().find(|r| r == &repo);
+                    //println!("{:?}",configured_repository);
                     match configured_repository {
                         Some(configured_repo) => {
-                            println!("Here {}",&self.quay_organization);
-                            
-                            let mut diff: Vec<UserElement> = actual_repo_permissions.users;
-                            println!("{:?}",diff);
-                            
-                            match configured_repo.permissions.as_ref() {
-                                Some(user) => {
-                                    for el_permission in &user.users {
-                                        diff.retain(|x| x != el_permission);
-                                    }
-                                    println!("{:?}",diff);
+                            let mut diff_users: Vec<UserElement> = actual_repo_permissions.users;
+                            println!("Actual USERS permissions {:?}", diff_users);
+
+                            if let Some(user) = configured_repo.permissions.as_ref() {
+                                for el_permission in &user.users {
+                                    diff_users.retain(|x| x != el_permission);
                                 }
-                                None => {}
+                                println!("Wanted USERS permissions {:?}", &user.users);
+                            } else {
+                                println!("Wanted USERS permissions: NONE");
+                                //If there is not a wanted user, Quay adds a single admin user so the difference must be zero.
+                                if diff_users.len() > 0 {
+                                   diff_users.clear();
+                                   println!("--> The admin user is not being counted.")
+
+                                }
+                                
                             }
+
+                            
+
+                            println!("Difference USER permissions {:?}", diff_users);
+
+                            println!();
+                            
+                            let mut diff_robots: Vec<UserElement> = actual_repo_permissions.robots;
+                            println!("Actual ROBOTS permissions {:?}", diff_robots);
+
+                            if let Some(user) = configured_repo.permissions.as_ref() {
+                                for el_permission in &user.robots {
+                                    diff_robots.retain(|x| x != el_permission);
+                                }
+                                println!("Wanted ROBOT permissions {:?}", &user.robots);
+                            } else {
+                                println!("Wanted ROBOT permissions: NONE");
+                            }
+
+                            println!("Difference ROBOTS permissions {:?}", diff_robots);
                         }
                         None => {}
                     }
