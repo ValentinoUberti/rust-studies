@@ -62,6 +62,7 @@ repositories:
         users:
             - name: valeidm
               role: admin
+           
 
 # Robots
 robots:

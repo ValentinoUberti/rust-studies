@@ -149,7 +149,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
     let results = join_all(handles_all_organizations);
     
-/*
+
     for result in results.await {
         print_result("Organization ->".to_string(), result);
         //pb.inc(1);
@@ -210,7 +210,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     for result in results.await {
         print_result("Repository permissions ->".to_string(), result);
     }
-*/
+
     println!("------------");
     // Create repositories permission
     println!(
