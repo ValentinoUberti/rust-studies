@@ -23,7 +23,12 @@ pub mod organization_struct {
             repo: &String,
             user: &UserElement,
         ) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn delete_extra_user_permission_from_repository(
+        async fn delete_user_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn search_extra_user_permission_from_repository(
             &self,
             repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>>;
@@ -90,7 +95,7 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
-        async fn delete_extra_user_permission_from_repository(
+        async fn search_extra_user_permission_from_repository(
             &self,
             repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>> {
@@ -175,19 +180,19 @@ pub mod organization_struct {
                                 println!("Wanted USERS permissions: NONE");
                                 //If there is not a wanted user, Quay adds a single admin user so the difference must be zero.
                                 if diff_users.len() > 0 {
-                                   diff_users.clear();
-                                   println!("--> The admin user is not being counted.")
-
+                                    diff_users.clear();
+                                    println!("--> The admin user is not being counted.")
                                 }
-                                
                             }
-
-                            
 
                             println!("Difference USER permissions {:?}", diff_users);
 
+                            for user in diff_users {
+                                self.delete_user_permission_from_repository(&repo.name, &user).await?;
+                            }
+
                             println!();
-                            
+
                             let mut diff_robots: Vec<UserElement> = actual_repo_permissions.robots;
                             println!("Actual ROBOTS permissions {:?}", diff_robots);
 
@@ -201,6 +206,17 @@ pub mod organization_struct {
                             }
 
                             println!("Difference ROBOTS permissions {:?}", diff_robots);
+
+                            //Fix the robot name
+                            let diff_fixed_robots = diff_robots.iter().map(|robot| UserElement {
+                                name: format!("{}+{}", &self.quay_organization, robot.name),
+                                role: robot.role.to_owned(),
+                            });
+                            for robot in diff_fixed_robots {
+                                self.delete_user_permission_from_repository(&repo.name, &robot)
+                                    .await?;
+                            }
+                            //delete_user_permission_to_repository
                         }
                         None => {}
                     }
@@ -286,6 +302,30 @@ pub mod organization_struct {
             Ok(response.clone())
         }
 
+        async fn delete_user_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::DELETE,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
         async fn grant_team_permission_to_repository(
             &self,
             repo: &String,
