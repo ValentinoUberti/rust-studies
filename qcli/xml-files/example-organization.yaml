@@ -28,8 +28,8 @@ repositories:
         src_registry: quay.io
         src_image: libpod/alpine
         src_image_tags: "['latest','v1']"
-        #ext_registry_username:
-        #ext_registry_password:
+        ext_registry_username:
+        ext_registry_password:
         ext_registry_verify_tls: true
         robot_username: writer
         sync_interval: 86400

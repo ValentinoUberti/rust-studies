@@ -60,6 +60,7 @@ pub mod organization_struct {
             team: &String,
             user: &String,
         ) -> Result<QuayResponse, Box<dyn Error>>;
+
         async fn add_robot_to_team(
             &self,
             team: &String,
@@ -69,7 +70,10 @@ pub mod organization_struct {
             &self,
             team: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>>;
-
+        async fn create_repository_mirror(
+            &self,
+            team: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn send_request(
             &self,
             endpoint: String,
@@ -105,6 +109,98 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
+        async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
+            let mut body = HashMap::new();
+            body.insert("name", &self.quay_organization);
+            body.insert("email", &self.quay_organization_role_email);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::POST,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
+        async fn grant_user_permission_to_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+        async fn delete_user_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::DELETE,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+        async fn delete_team_permission_from_repository(
+            &self,
+            repo: &String,
+            user: &UserElement,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
+                &self.quay_endpoint, &self.quay_organization, repo, user.name
+            );
+            let mut body = HashMap::new();
+            body.insert("role", &user.role);
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::DELETE,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
         async fn get_user_permission_from_repository(
             &self,
             repo: &Repository,
@@ -260,7 +356,7 @@ pub mod organization_struct {
             //println!("{} - {}", &self.quay_organization, repo.name);
             match response.status_code {
                 StatusCode::OK => {
-                    let mut actual_repo_permissions= Vec::new();
+                    let mut actual_repo_permissions = Vec::new();
                     println!();
                     println!("####################");
                     println!(
@@ -290,32 +386,30 @@ pub mod organization_struct {
                     //println!("{:?}",configured_repository);
                     match configured_repository {
                         Some(configured_repo) => {
-                           
-                                println!("Actual TEAMS permissions {:?}", actual_repo_permissions);
+                            println!("Actual TEAMS permissions {:?}", actual_repo_permissions);
 
-                                let mut diff_teams = actual_repo_permissions;
-                                if let Some(user) = configured_repo.permissions.as_ref() {
-                                    
-                                    if let Some(teams) = &user.teams {
-                                        for el_permission in teams {
-                                            diff_teams.retain(|x| x != el_permission);
-                                        }
-                                        println!("Wanted TEAMS permissions {:?}", &user.teams);
+                            let mut diff_teams = actual_repo_permissions;
+                            if let Some(user) = configured_repo.permissions.as_ref() {
+                                if let Some(teams) = &user.teams {
+                                    for el_permission in teams {
+                                        diff_teams.retain(|x| x != el_permission);
                                     }
+                                    println!("Wanted TEAMS permissions {:?}", &user.teams);
                                 }
+                            }
 
-                                println!("Difference TEAMS permissions {:?}", diff_teams);
-                           
+                            println!("Difference TEAMS permissions {:?}", diff_teams);
 
-                          
                             for team in diff_teams {
                                 self.delete_team_permission_from_repository(&repo.name, &team)
                                     .await?;
                             }
-                            
+
                             println!();
                         }
-                        None => { println!("No teams present")}
+                        None => {
+                            println!("No teams present")
+                        }
                     }
                 }
                 _ => {}
@@ -323,64 +417,18 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        async fn add_user_to_team(
+
+        async fn grant_robot_permission_to_repository(
             &self,
-            team: &String,
-            user: &String,
+            repo: &String,
+            user: &UserElement,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
-                "https://{}/api/v1/organization/{}/team/{}/members/{}",
-                &self.quay_endpoint, &self.quay_organization, team, user
-            );
-            let body = HashMap::new();
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::PUT,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-        async fn add_robot_to_team(
-            &self,
-            team: &String,
-            robot: &String,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/organization/{}/team/{}/members/{}",
+                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
                 &self.quay_endpoint,
                 &self.quay_organization,
-                team,
-                format!("{}+{}", &self.quay_organization, robot)
-            );
-            let body = HashMap::new();
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::PUT,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-
-        async fn grant_user_permission_to_repository(
-            &self,
-            repo: &String,
-            user: &UserElement,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
-                &self.quay_endpoint, &self.quay_organization, repo, user.name
+                repo,
+                format!("{}+{}", &self.quay_organization, user.name)
             );
             let mut body = HashMap::new();
             body.insert("role", &user.role);
@@ -392,56 +440,6 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-
-        async fn delete_user_permission_from_repository(
-            &self,
-            repo: &String,
-            user: &UserElement,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
-                &self.quay_endpoint, &self.quay_organization, repo, user.name
-            );
-            let mut body = HashMap::new();
-            body.insert("role", &user.role);
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::DELETE,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-
-        async fn delete_team_permission_from_repository(
-            &self,
-            repo: &String,
-            user: &UserElement,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
-                &self.quay_endpoint, &self.quay_organization, repo, user.name
-            );
-            let mut body = HashMap::new();
-            body.insert("role", &user.role);
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::DELETE,
                 )
                 .await?;
 
@@ -471,52 +469,6 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-        async fn grant_robot_permission_to_repository(
-            &self,
-            repo: &String,
-            user: &UserElement,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!(
-                "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
-                &self.quay_endpoint,
-                &self.quay_organization,
-                repo,
-                format!("{}+{}", &self.quay_organization, user.name)
-            );
-            let mut body = HashMap::new();
-            body.insert("role", &user.role);
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::PUT,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-        async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
-            let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
-            let mut body = HashMap::new();
-            body.insert("name", &self.quay_organization);
-            body.insert("email", &self.quay_organization_role_email);
-
-            let response = &self
-                .send_request(
-                    endpoint,
-                    body,
-                    &self.quay_oauth_token,
-                    &self.quay_organization,
-                    Method::POST,
-                )
-                .await?;
-
-            Ok(response.clone())
-        }
-
         async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}",
@@ -536,7 +488,6 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
-
         async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/robots/{}",
@@ -590,6 +541,57 @@ pub mod organization_struct {
 
             Ok(response.clone())
         }
+
+        async fn add_user_to_team(
+            &self,
+            team: &String,
+            user: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/team/{}/members/{}",
+                &self.quay_endpoint, &self.quay_organization, team, user
+            );
+            let body = HashMap::new();
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
+
+        async fn add_robot_to_team(
+            &self,
+            team: &String,
+            robot: &String,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/organization/{}/team/{}/members/{}",
+                &self.quay_endpoint,
+                &self.quay_organization,
+                team,
+                format!("{}+{}", &self.quay_organization, robot)
+            );
+            let body = HashMap::new();
+
+            let response = &self
+                .send_request(
+                    endpoint,
+                    body,
+                    &self.quay_oauth_token,
+                    &self.quay_organization,
+                    Method::PUT,
+                )
+                .await?;
+
+            Ok(response.clone())
+        }
         async fn create_repository(
             &self,
             repo: &Repository,
@@ -627,6 +629,71 @@ pub mod organization_struct {
                 .await?;
 
             Ok(response.clone())
+        }
+
+        async fn create_repository_mirror(
+            &self,
+            repo: &Repository,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
+            let endpoint = format!(
+                "https://{}/api/v1/repository/{}/mirror",
+                &self.quay_endpoint, repo.name
+            );
+            let mut body: HashMap<&str, &String> = HashMap::new();
+
+            let repo_kind = String::from("image");
+            let empty = String::from("");
+            let desc = repo.description.as_ref().unwrap_or(&empty);
+            let default_visibility = String::from("public");
+
+            let is_enabled = &repo.mirror.to_string();
+
+            match &repo.mirror_params {
+                Some(params) => {
+                   
+                    let username = match &params.ext_registry_username {
+
+                        Some(user) => user,
+                        None => &empty,
+                    };
+
+                    body.insert("is_enabled", is_enabled);
+                    body.insert("external_reference", &params.src_image);
+                    body.insert("external_registry_username", username);
+                    
+                    let description = format!(
+                        "Configuring mirror for repository '{}' for organization '{}'",
+                        repo.name, &self.quay_organization
+                    );
+                    let response = &self
+                        .send_request(
+                            endpoint,
+                            body,
+                            &self.quay_oauth_token,
+                            &description,
+                            Method::POST,
+                        )
+                        .await?;
+                        return Ok(response.clone());
+                   
+                }
+
+                None => {
+                    let response = QuayResponse {
+
+                        response: Value::Null,
+                        description: String::from("Mirroring disabled"),
+                        status_code: StatusCode::OK,
+                    };
+                    return Ok(response.clone());
+                }
+            }
+
+            //body.insert("unstructured_metadata", empty);
+
+           
+
+           
         }
     }
 
@@ -680,7 +747,31 @@ pub mod organization_struct {
         #[serde(rename = "permissions")]
         pub permissions: Option<Permissions>,
     }
-
+    /*
+    {
+        "external_reference": "quay.io/valeube/hello-openshift",
+        "external_registry_username": "valeidm",
+        "external_registry_password": "casafu11",
+        "sync_interval": 86400,
+        "sync_start_date": "2023-01-21T06:13:00Z",
+        "robot_username": "44444444+robot",
+        "external_registry_config": {
+            "verify_tls": true,
+            "unsigned_images": true,
+            "proxy": {
+                "http_proxy": null,
+                "https_proxy": null,
+                "no_proxy": null
+            }
+        },
+        "root_rule": {
+            "rule_kind": "tag_glob_csv",
+            "rule_value": [
+                "latest"
+            ]
+        }
+    }
+    */
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
@@ -703,6 +794,21 @@ pub mod organization_struct {
 
         #[serde(rename = "is_enabled")]
         is_enabled: bool,
+
+        #[serde(rename = "https_proxy")]
+        https_proxy: Option<String>,
+
+        #[serde(rename = "http_proxy")]
+        http_proxy: Option<String>,
+
+        #[serde(rename = "no_proxy")]
+        no_proxy: Option<String>,
+
+        #[serde(rename = "ext_registry_username")]
+        ext_registry_username: Option<String>,
+
+        #[serde(rename = "ext_registry_password")]
+        ext_registry_password: Option<String>,
     }
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]

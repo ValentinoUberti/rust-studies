@@ -85,6 +85,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles_all_team_members = Vec::new();
     let mut handles_all_extra_user_permissions = Vec::new();
     let mut handles_all_extra_team_permissions = Vec::new();
+    let mut handles_all_mirror_configurations= Vec::new();
     let orgs = config.get_organizations();
 
     for org in orgs {
@@ -115,6 +116,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             handles_all_extra_team_permissions
                 .push(org.get_team_permission_from_repository(&repository));
 
+            handles_all_mirror_configurations.push(org.create_repository_mirror(&repository));
+
             if let Some(permissions) = &repository.permissions {
                 for robot in &permissions.robots {
                     handles_all_repositories_permissions
@@ -134,7 +137,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-
+/*
     println!("------------");
     // Create organization
     println!(
@@ -223,6 +226,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
         handles_all_repositories_permissions.len()
     );
     let results = join_all(handles_all_repositories_permissions);
+
+    for result in results.await {
+        print_result("Repository permissions ->".to_string(), result);
+    }
+*/
+
+    println!("------------");
+    // Configure repository mirror
+    println!(
+        "Configuring {} repositories mirror concurrently",
+        handles_all_mirror_configurations.len()
+    );
+    let results = join_all(handles_all_mirror_configurations);
 
     for result in results.await {
         print_result("Repository permissions ->".to_string(), result);
