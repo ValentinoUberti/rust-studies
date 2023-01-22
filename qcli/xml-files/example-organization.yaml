@@ -27,10 +27,13 @@ repositories:
     mirror_params:
         src_registry: quay.io
         src_image: libpod/alpine
-        src_image_tags: "['latest','v1']"
+        src_image_tags:
+          - "latest"
+          - "v1"
         ext_registry_username:
         ext_registry_password:
         ext_registry_verify_tls: true
+        unsigned_image: true
         robot_username: writer
         sync_interval: 86400
         is_enabled: true # This optional parameter enable/disable the scheduled sync each sync_interval. The default value if it is omited is false

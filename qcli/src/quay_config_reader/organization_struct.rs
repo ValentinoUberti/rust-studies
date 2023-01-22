@@ -1,5 +1,6 @@
 pub mod organization_struct {
     use async_trait::async_trait;
+    use chrono::{DateTime, Utc};
     use std::{collections::HashMap, error::Error, time::Duration};
     use substring::Substring;
 
@@ -74,21 +75,24 @@ pub mod organization_struct {
             &self,
             team: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn send_request(
+        async fn send_request<T>(
             &self,
             endpoint: String,
-            body: HashMap<&str, &String>,
+            body: &T,
             token: &String,
             description: &String,
             method: reqwest::Method,
-        ) -> Result<QuayResponse, Box<dyn Error>> {
+        ) -> Result<QuayResponse, Box<dyn Error>>
+        where
+            T: Serialize + std::marker::Sync,
+        {
             let api = reqwest::Client::new()
                 .request(method, endpoint)
                 .timeout(Duration::from_secs(5))
                 .header("Content-Type", "application/json")
                 .header("accept", "application/json")
                 .header("Authorization", format!("Bearer {}", &token))
-                .json(&body);
+                .json(body);
 
             //println!("{:?}", api);
             let response_status = api.send().await?;
@@ -118,7 +122,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::POST,
@@ -143,7 +147,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
@@ -161,13 +165,13 @@ pub mod organization_struct {
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
                 &self.quay_endpoint, &self.quay_organization, repo, user.name
             );
-            let mut body = HashMap::new();
+            let mut body: HashMap<&str, &String> = HashMap::new();
             body.insert("role", &user.role);
 
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
@@ -185,13 +189,13 @@ pub mod organization_struct {
                 "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
                 &self.quay_endpoint, &self.quay_organization, repo, user.name
             );
-            let mut body = HashMap::new();
+            let mut body: HashMap<&str, &String> = HashMap::new();
             body.insert("role", &user.role);
 
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
@@ -209,11 +213,11 @@ pub mod organization_struct {
                 "https://{}/api/v1/repository/{}/{}/permissions/user/",
                 &self.quay_endpoint, &self.quay_organization, repo.name,
             );
-            let body = HashMap::new();
+            let body: HashMap<&str, &String> = HashMap::new();
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::GET,
@@ -342,11 +346,11 @@ pub mod organization_struct {
                 "https://{}/api/v1/repository/{}/{}/permissions/team/",
                 &self.quay_endpoint, &self.quay_organization, repo.name,
             );
-            let body = HashMap::new();
+            let body: HashMap<&str, &String> = HashMap::new();
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::GET,
@@ -436,7 +440,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
@@ -460,7 +464,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
@@ -474,12 +478,12 @@ pub mod organization_struct {
                 "https://{}/api/v1/organization/{}",
                 &self.quay_endpoint, &self.quay_organization
             );
-            let body = HashMap::new();
+            let body: HashMap<&str, &String> = HashMap::new();
 
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
@@ -504,7 +508,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
@@ -532,7 +536,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
@@ -551,12 +555,12 @@ pub mod organization_struct {
                 "https://{}/api/v1/organization/{}/team/{}/members/{}",
                 &self.quay_endpoint, &self.quay_organization, team, user
             );
-            let body = HashMap::new();
+            let body: HashMap<&str, &String> = HashMap::new();
 
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
@@ -578,12 +582,12 @@ pub mod organization_struct {
                 team,
                 format!("{}+{}", &self.quay_organization, robot)
             );
-            let body = HashMap::new();
+            let body: HashMap<&str, &String> = HashMap::new();
 
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
@@ -621,7 +625,7 @@ pub mod organization_struct {
             let response = &self
                 .send_request(
                     endpoint,
-                    body,
+                    &body,
                     &self.quay_oauth_token,
                     &description,
                     Method::POST,
@@ -636,31 +640,44 @@ pub mod organization_struct {
             repo: &Repository,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
-                "https://{}/api/v1/repository/{}/mirror",
-                &self.quay_endpoint, repo.name
+                "https://{}/api/v1/repository/{}/{}/mirror",
+                &self.quay_endpoint, &self.quay_organization, repo.name
             );
-            let mut body: HashMap<&str, &String> = HashMap::new();
 
-            let repo_kind = String::from("image");
-            let empty = String::from("");
-            let desc = repo.description.as_ref().unwrap_or(&empty);
-            let default_visibility = String::from("public");
-
-            let is_enabled = &repo.mirror.to_string();
+            println!("{}",endpoint);
 
             match &repo.mirror_params {
                 Some(params) => {
-                   
-                    let username = match &params.ext_registry_username {
-
-                        Some(user) => user,
-                        None => &empty,
+                    let proxy_configuration = QuayMirrorProxy {
+                        http_proxy: params.http_proxy.clone(),
+                        https_proxy: params.https_proxy.clone(),
+                        no_proxy: params.no_proxy.clone(),
                     };
 
-                    body.insert("is_enabled", is_enabled);
-                    body.insert("external_reference", &params.src_image);
-                    body.insert("external_registry_username", username);
-                    
+                    let external_registry_config = ExternalRegistryConfig {
+                        verify_tls: params.ext_registry_verify_tls,
+                        unsigned_images: params.ext_registry_unsigned_image.unwrap_or_default(),
+                        proxy: proxy_configuration,
+                    };
+
+                    let root_rule = RootRule {
+                        rule_kind: "tag_glob_csv".to_string(),
+                        rule_value: params.src_image_tags.clone(),
+                    };
+
+                    let now: DateTime<Utc> = Utc::now();
+
+                    let body = MirrorConfig {
+                        external_reference: params.src_image.clone(),
+                        external_registry_password: params.ext_registry_password.clone(),
+                        external_registry_username: params.ext_registry_username.clone(),
+                        sync_interval: params.sync_interval,
+                        sync_start_date: now.to_rfc3339(),
+                        robot_username: params.robot_username.clone(),
+                        external_registry_config,
+                        root_rule,
+                    };
+
                     let description = format!(
                         "Configuring mirror for repository '{}' for organization '{}'",
                         repo.name, &self.quay_organization
@@ -668,19 +685,17 @@ pub mod organization_struct {
                     let response = &self
                         .send_request(
                             endpoint,
-                            body,
+                            &body,
                             &self.quay_oauth_token,
                             &description,
-                            Method::POST,
+                            Method::PUT,
                         )
                         .await?;
-                        return Ok(response.clone());
-                   
+                    return Ok(response.clone());
                 }
 
                 None => {
                     let response = QuayResponse {
-
                         response: Value::Null,
                         description: String::from("Mirroring disabled"),
                         status_code: StatusCode::OK,
@@ -690,10 +705,6 @@ pub mod organization_struct {
             }
 
             //body.insert("unstructured_metadata", empty);
-
-           
-
-           
         }
     }
 
@@ -772,6 +783,58 @@ pub mod organization_struct {
         }
     }
     */
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct MirrorConfig {
+        #[serde(rename = "external_reference")]
+        pub external_reference: String,
+        #[serde(rename = "external_registry_username")]
+        pub external_registry_username: Option<String>,
+        #[serde(rename = "external_registry_password")]
+        pub external_registry_password: Option<String>,
+        #[serde(rename = "sync_interval")]
+        pub sync_interval: i64,
+        #[serde(rename = "sync_start_date")]
+        pub sync_start_date: String,
+        #[serde(rename = "robot_username")]
+        pub robot_username: String,
+        #[serde(rename = "external_registry_config")]
+        pub external_registry_config: ExternalRegistryConfig,
+        #[serde(rename = "root_rule")]
+        pub root_rule: RootRule,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct ExternalRegistryConfig {
+        #[serde(rename = "verify_tls")]
+        pub verify_tls: bool,
+        #[serde(rename = "unsigned_images")]
+        pub unsigned_images: bool,
+        pub proxy: QuayMirrorProxy,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct QuayMirrorProxy {
+        #[serde(rename = "http_proxy")]
+        pub http_proxy: Option<String>,
+        #[serde(rename = "https_proxy")]
+        pub https_proxy: Option<String>,
+        #[serde(rename = "no_proxy")]
+        pub no_proxy: Option<String>,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct RootRule {
+        #[serde(rename = "rule_kind")]
+        pub rule_kind: String,
+        #[serde(rename = "rule_value")]
+        pub rule_value: Vec<String>,
+    }
+
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
@@ -781,10 +844,13 @@ pub mod organization_struct {
         src_image: String,
 
         #[serde(rename = "src_image_tags")]
-        src_image_tags: String,
+        src_image_tags: Vec<String>,
 
         #[serde(rename = "ext_registry_verify_tls")]
         ext_registry_verify_tls: bool,
+
+        #[serde(rename = "ext_registry_unsigned_image")]
+        ext_registry_unsigned_image: Option<bool>,
 
         #[serde(rename = "robot_username")]
         robot_username: String,

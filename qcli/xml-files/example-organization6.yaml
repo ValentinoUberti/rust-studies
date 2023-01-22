@@ -26,7 +26,9 @@ repositories:
     mirror_params:
         src_registry: quay.io
         src_image: libpod/alpine
-        src_image_tags: "['latest','v1']"
+        src_image_tags:
+          - "latest"
+          - "v1"
         #ext_registry_username:
         #ext_registry_password:
         ext_registry_verify_tls: true
@@ -55,7 +57,9 @@ repositories:
     mirror_params:
         src_registry: quay.io
         src_image: libpod/alpine
-        src_image_tags: "['latest','v1']"
+        src_image_tags:
+          - "latest"
+          - "v1"
         #ext_registry_username:
         #ext_registry_password:
         ext_registry_verify_tls: true
