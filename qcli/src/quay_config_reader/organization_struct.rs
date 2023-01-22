@@ -669,12 +669,16 @@ pub mod organization_struct {
 
                     let now: DateTime<Utc> = Utc::now();
 
+                    //let date_format = format("{}-{}-{}T{}:{}:{}",now.);
+
+                    let formatted = format!("{}", now.format("%Y-%m-%dT%H:%M:%Sz"));
+
                     let body = MirrorConfig {
                         external_reference: format!("{}/{}",params.src_registry ,params.src_image.clone()),
                         external_registry_password: params.ext_registry_password.clone(),
                         external_registry_username: params.ext_registry_username.clone(),
                         sync_interval: params.sync_interval,
-                        sync_start_date: now.to_rfc3339(),
+                        sync_start_date: formatted,
                         //sync_start_date: "2023-01-22T06:28:00Z".to_string(),
                         robot_username: format!("{}+{}",&self.quay_organization,params.robot_username.clone()),
                         external_registry_config,
