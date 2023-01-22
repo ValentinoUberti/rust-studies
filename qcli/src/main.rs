@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles_all_team_members = Vec::new();
     let mut handles_all_extra_user_permissions = Vec::new();
     let mut handles_all_extra_team_permissions = Vec::new();
-    let mut handles_all_mirror_configurations= Vec::new();
+    let mut handles_all_mirror_configurations = Vec::new();
     let orgs = config.get_organizations();
 
     for org in orgs {
@@ -137,100 +137,100 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-/*
-    println!("------------");
-    // Create organization
-    println!(
-        "Creating {} organization cuncurrently",
-        handles_all_organizations.len()
-    );
+   
+        println!("------------");
+        // Create organization
+        println!(
+            "Creating {} organization cuncurrently",
+            handles_all_organizations.len()
+        );
 
-    let results = join_all(handles_all_organizations);
+        let results = join_all(handles_all_organizations);
 
-    for result in results.await {
-        print_result("Organization ->".to_string(), result);
-        //pb.inc(1);
-    }
-    //pb.finish();
+        for result in results.await {
+            print_result("Organization ->".to_string(), result);
+            //pb.inc(1);
+        }
+        //pb.finish();
 
-    println!("------------");
-    // Create robots
-    println!("Creating {} robots cuncurrently", handles_all_robots.len());
-    let results = join_all(handles_all_robots);
+        println!("------------");
+        // Create robots
+        println!("Creating {} robots cuncurrently", handles_all_robots.len());
+        let results = join_all(handles_all_robots);
 
-    for result in results.await {
-        print_result("Robots ->".to_string(), result);
-    }
+        for result in results.await {
+            print_result("Robots ->".to_string(), result);
+        }
 
-    println!("------------");
-    // Create teams
-    println!("Creating {} teams cuncurrently", handles_all_teams.len());
-    let results = join_all(handles_all_teams);
+        println!("------------");
+        // Create teams
+        println!("Creating {} teams cuncurrently", handles_all_teams.len());
+        let results = join_all(handles_all_teams);
 
-    for result in results.await {
-        print_result("Teams ->".to_string(), result);
-    }
+        for result in results.await {
+            print_result("Teams ->".to_string(), result);
+        }
 
-    println!("------------");
-    // Adding team members
-    println!(
-        "Adding {} team members cuncurrently",
-        handles_all_team_members.len()
-    );
-    let results = join_all(handles_all_team_members);
+        println!("------------");
+        // Adding team members
+        println!(
+            "Adding {} team members cuncurrently",
+            handles_all_team_members.len()
+        );
+        let results = join_all(handles_all_team_members);
 
-    for result in results.await {
-        print_result("Team members ->".to_string(), result);
-    }
+        for result in results.await {
+            print_result("Team members ->".to_string(), result);
+        }
 
-    println!("------------");
-    // Create repositories
-    println!(
-        "Creating {} repositories cuncurrently",
-        handles_all_repositories.len()
-    );
+        println!("------------");
+        // Create repositories
+        println!(
+            "Creating {} repositories cuncurrently",
+            handles_all_repositories.len()
+        );
 
-    let results = join_all(handles_all_repositories);
+        let results = join_all(handles_all_repositories);
 
-    for result in results.await {
-        print_result("Repository ->".to_string(), result);
-    }
+        for result in results.await {
+            print_result("Repository ->".to_string(), result);
+        }
 
-    println!("------------");
-    //  Get user currently repositories permission (IF ANY)
-    println!(
-        "Delete extra user and robot permission from {} repository cuncurrently",
-        handles_all_extra_user_permissions.len()
-    );
-    let results = join_all(handles_all_extra_user_permissions);
+        println!("------------");
+        //  Get user currently repositories permission (IF ANY)
+        println!(
+            "Delete extra user and robot permission from {} repository cuncurrently",
+            handles_all_extra_user_permissions.len()
+        );
+        let results = join_all(handles_all_extra_user_permissions);
 
-    for result in results.await {
-        //print_result("Repository USER permissions ->".to_string(), result);
-    }
+        for result in results.await {
+            //print_result("Repository USER permissions ->".to_string(), result);
+        }
 
-    println!("------------");
-    // Get currently team repositories permission (IF ANY)
-    println!(
-        "Delete extra team permission from {} repository cuncurrently",
-        handles_all_extra_team_permissions.len()
-    );
-    let results = join_all(handles_all_extra_team_permissions);
+        println!("------------");
+        // Get currently team repositories permission (IF ANY)
+        println!(
+            "Delete extra team permission from {} repository cuncurrently",
+            handles_all_extra_team_permissions.len()
+        );
+        let results = join_all(handles_all_extra_team_permissions);
 
-    for result in results.await {
-        print_result("Repository TEAM permissions ->".to_string(), result);
-    }
-    println!("------------");
-    // Create repositories permission
-    println!(
-        "Creating {} repositories permissions cuncurrently",
-        handles_all_repositories_permissions.len()
-    );
-    let results = join_all(handles_all_repositories_permissions);
+        for result in results.await {
+            print_result("Repository TEAM permissions ->".to_string(), result);
+        }
+        println!("------------");
+        // Create repositories permission
+        println!(
+            "Creating {} repositories permissions cuncurrently",
+            handles_all_repositories_permissions.len()
+        );
+        let results = join_all(handles_all_repositories_permissions);
 
-    for result in results.await {
-        print_result("Repository permissions ->".to_string(), result);
-    }
-*/
+        for result in results.await {
+            print_result("Repository permissions ->".to_string(), result);
+        }
+  
 
     println!("------------");
     // Configure repository mirror
@@ -245,19 +245,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     /*
-     let results = join_all(handles_delete_organization);
+         let results = join_all(handles_delete_organization);
 
-     for result in results.await {
-         match result {
-             Ok(r) => {
-                 println!("------------------------");
-                 println!("{}", r.description);
-                 println!("Status code: {}", r.status_code);
-                 println!("Message: {}", r.response);
+         for result in results.await {
+             match result {
+                 Ok(r) => {
+                     println!("------------------------");
+                     println!("{}", r.description);
+                     println!("Status code: {}", r.status_code);
+                     println!("Message: {}", r.response);
+                 }
+                 Err(e) => println!("Error: {}", e),
              }
-             Err(e) => println!("Error: {}", e),
          }
-     }
     */
     Ok(())
 }

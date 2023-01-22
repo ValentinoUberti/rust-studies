@@ -4,7 +4,6 @@ pub mod organization_struct {
     use std::{collections::HashMap, error::Error, time::Duration};
     use substring::Substring;
 
-    use futures::SinkExt;
     use reqwest::{Method, StatusCode};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
@@ -95,7 +94,6 @@ pub mod organization_struct {
                 .json(body);
 
             println!("{:?}", api);
-
 
             let response_status = api.send().await?;
             let status_code = response_status.status();
@@ -646,7 +644,7 @@ pub mod organization_struct {
                 &self.quay_endpoint, &self.quay_organization, repo.name
             );
 
-            println!("{}",endpoint);
+            println!("{}", endpoint);
 
             match &repo.mirror_params {
                 Some(params) => {
@@ -674,24 +672,31 @@ pub mod organization_struct {
                     let formatted = format!("{}", now.format("%Y-%m-%dT%H:%M:%Sz"));
 
                     let body = MirrorConfig {
-                        external_reference: format!("{}/{}",params.src_registry ,params.src_image.clone()),
+                        external_reference: format!(
+                            "{}/{}",
+                            params.src_registry,
+                            params.src_image.clone()
+                        ),
                         external_registry_password: params.ext_registry_password.clone(),
                         external_registry_username: params.ext_registry_username.clone(),
                         sync_interval: params.sync_interval,
                         sync_start_date: formatted,
                         //sync_start_date: "2023-01-22T06:28:00Z".to_string(),
-                        robot_username: format!("{}+{}",&self.quay_organization,params.robot_username.clone()),
+                        robot_username: format!(
+                            "{}+{}",
+                            &self.quay_organization,
+                            params.robot_username.clone()
+                        ),
                         external_registry_config,
                         root_rule,
                     };
 
-                    println!("{}",serde_json::to_string(&body).unwrap());
+                    println!("{}", serde_json::to_string(&body).unwrap());
 
                     let description = format!(
                         "Configuring mirror for repository '{}' for organization '{}'",
                         repo.name, &self.quay_organization
                     );
-
 
                     //Change repository state to mirror
 
@@ -702,20 +707,17 @@ pub mod organization_struct {
 
                     let mut body_state: HashMap<&str, &str> = HashMap::new();
 
-                    body_state.insert("state","MIRROR");
+                    body_state.insert("state", "MIRROR");
 
                     let response = &self
-                    .send_request(
-                        endpoint_state,
-                        &body_state,
-                        &self.quay_oauth_token,
-                        &description,
-                        Method::POST,
-                    )
-                    .await?;
-
-
-
+                        .send_request(
+                            endpoint_state,
+                            &body_state,
+                            &self.quay_oauth_token,
+                            &description,
+                            Method::POST,
+                        )
+                        .await?;
 
                     let response = &self
                         .send_request(
@@ -727,24 +729,21 @@ pub mod organization_struct {
                         )
                         .await?;
 
-
-                    if response.status_code==StatusCode::CONFLICT {
-
+                    if response.status_code == StatusCode::CONFLICT {
                         println!("Mirror configuration already exists, updating...");
-                        
+
                         let response_put = &self
-                        .send_request(
-                            endpoint,
-                            &body,
-                            &self.quay_oauth_token,
-                            &description,
-                            Method::PUT,
-                        )
-                        .await?;
+                            .send_request(
+                                endpoint,
+                                &body,
+                                &self.quay_oauth_token,
+                                &description,
+                                Method::PUT,
+                            )
+                            .await?;
 
                         return Ok(response_put.clone());
                     }
-
 
                     return Ok(response.clone());
                 }
