@@ -1,0 +1,24 @@
+{
+    "external_reference": "quay.io/libpod/alpine",
+    "external_registry_username": "valeidm",
+    "external_registry_password": "casafu11",
+    "sync_interval": 86400,
+    "sync_start_date": "2023-01-22T06:28:00Z",
+    "robot_username": "exampleorg+writer",
+    "external_registry_config": {
+        "verify_tls": true,
+        "unsigned_images": false,
+        "proxy": {
+            "http_proxy": null,
+            "https_proxy": null,
+            "no_proxy": null
+        }
+    },
+    "root_rule": {
+        "rule_kind": "tag_glob_csv",
+        "rule_value": [
+            "latest",
+            "v1"
+        ]
+    }
+}

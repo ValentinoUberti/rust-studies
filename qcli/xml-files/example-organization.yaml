@@ -30,8 +30,8 @@ repositories:
         src_image_tags:
           - "latest"
           - "v1"
-        ext_registry_username:
-        ext_registry_password:
+        ext_registry_username: "valeidm"
+        ext_registry_password: "casafu11"
         ext_registry_verify_tls: true
         unsigned_image: true
         robot_username: writer

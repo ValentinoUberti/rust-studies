@@ -94,7 +94,9 @@ pub mod organization_struct {
                 .header("Authorization", format!("Bearer {}", &token))
                 .json(body);
 
-            //println!("{:?}", api);
+            println!("{:?}", api);
+
+
             let response_status = api.send().await?;
             let status_code = response_status.status();
             let response = match response_status.json::<serde_json::Value>().await {
@@ -668,21 +670,65 @@ pub mod organization_struct {
                     let now: DateTime<Utc> = Utc::now();
 
                     let body = MirrorConfig {
-                        external_reference: params.src_image.clone(),
+                        external_reference: format!("{}/{}",params.src_registry ,params.src_image.clone()),
                         external_registry_password: params.ext_registry_password.clone(),
                         external_registry_username: params.ext_registry_username.clone(),
                         sync_interval: params.sync_interval,
                         sync_start_date: now.to_rfc3339(),
-                        robot_username: params.robot_username.clone(),
+                        //sync_start_date: "2023-01-22T06:28:00Z".to_string(),
+                        robot_username: format!("{}+{}",&self.quay_organization,params.robot_username.clone()),
                         external_registry_config,
                         root_rule,
                     };
+
+                    println!("{}",serde_json::to_string(&body).unwrap());
 
                     let description = format!(
                         "Configuring mirror for repository '{}' for organization '{}'",
                         repo.name, &self.quay_organization
                     );
+
+
+                    //Change repository state to mirror
+
+                    let endpoint_state = format!(
+                        "https://{}/api/v1/repository/{}/{}/changestate",
+                        &self.quay_endpoint, &self.quay_organization, repo.name
+                    );
+
+                    let mut body_state: HashMap<&str, &str> = HashMap::new();
+
+                    body_state.insert("state","MIRROR");
+
                     let response = &self
+                    .send_request(
+                        endpoint_state,
+                        &body_state,
+                        &self.quay_oauth_token,
+                        &description,
+                        Method::POST,
+                    )
+                    .await?;
+
+
+
+
+                    let response = &self
+                        .send_request(
+                            endpoint.clone(),
+                            &body,
+                            &self.quay_oauth_token,
+                            &description,
+                            Method::POST,
+                        )
+                        .await?;
+
+
+                    if response.status_code==StatusCode::CONFLICT {
+
+                        println!("Mirror configuration already exists, updating...");
+                        
+                        let response_put = &self
                         .send_request(
                             endpoint,
                             &body,
@@ -691,6 +737,11 @@ pub mod organization_struct {
                             Method::PUT,
                         )
                         .await?;
+
+                        return Ok(response_put.clone());
+                    }
+
+
                     return Ok(response.clone());
                 }
 
