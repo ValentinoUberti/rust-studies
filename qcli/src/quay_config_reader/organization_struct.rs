@@ -715,7 +715,7 @@ pub mod organization_struct {
                             &body_state,
                             &self.quay_oauth_token,
                             &description,
-                            Method::POST,
+                            Method::PUT,
                         )
                         .await?;
 
