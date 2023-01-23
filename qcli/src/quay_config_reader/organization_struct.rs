@@ -1,6 +1,12 @@
 pub mod organization_struct {
     use async_trait::async_trait;
     use chrono::{DateTime, Utc};
+    use governor::clock::{QuantaClock, QuantaInstant};
+    use governor::middleware::NoOpMiddleware;
+    use governor::state::{InMemoryState, NotKeyed};
+    use governor::{self, Quota, RateLimiter};
+    use std::num::NonZeroU32;
+    use std::sync::Arc;
     use std::{collections::HashMap, error::Error, time::Duration};
     use substring::Substring;
 
@@ -17,62 +23,117 @@ pub mod organization_struct {
 
     #[async_trait]
     pub trait Actions {
-        async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_organization(
+            &self,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_user_permission_to_repository(
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_user_permission_from_repository(
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
 
         async fn delete_team_permission_from_repository(
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn get_user_permission_from_repository(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn get_team_permission_from_repository(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_robot_permission_to_repository(
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_team_permission_to_repository(
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>>;
-        async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn delete_organization(
+            &self,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_robot(
+            &self,
+            robot: &RobotDetails,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
+        async fn create_team(
+            &self,
+            team: &Team,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn add_user_to_team(
             &self,
             team: &String,
             user: &String,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
 
         async fn add_robot_to_team(
             &self,
             team: &String,
             user: &String,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_repository(
             &self,
             team: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_repository_mirror(
             &self,
             team: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn send_request<T>(
             &self,
@@ -81,6 +142,9 @@ pub mod organization_struct {
             token: &String,
             description: &String,
             method: reqwest::Method,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>>
         where
             T: Serialize + std::marker::Sync,
@@ -93,7 +157,9 @@ pub mod organization_struct {
                 .header("Authorization", format!("Bearer {}", &token))
                 .json(body);
 
-            println!("{:?}", api);
+            //println!("{:?}", api);
+            let retry_jitter = governor::Jitter::new(Duration::ZERO, Duration::from_millis(1));
+            governor.until_ready_with_jitter(retry_jitter).await;
 
             let response_status = api.send().await?;
             let status_code = response_status.status();
@@ -113,7 +179,12 @@ pub mod organization_struct {
 
     #[async_trait]
     impl Actions for OrganizationYaml {
-        async fn create_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
+        async fn create_organization(
+            &self,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
             let mut body = HashMap::new();
             body.insert("name", &self.quay_organization);
@@ -126,6 +197,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::POST,
+                    governor,
                 )
                 .await?;
 
@@ -136,6 +208,9 @@ pub mod organization_struct {
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -151,6 +226,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
@@ -160,6 +236,9 @@ pub mod organization_struct {
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -175,6 +254,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
+                    governor,
                 )
                 .await?;
 
@@ -184,6 +264,9 @@ pub mod organization_struct {
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
@@ -199,6 +282,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
+                    governor,
                 )
                 .await?;
 
@@ -208,6 +292,9 @@ pub mod organization_struct {
         async fn get_user_permission_from_repository(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/",
@@ -221,6 +308,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::GET,
+                    governor.clone(),
                 )
                 .await?;
 
@@ -298,8 +386,12 @@ pub mod organization_struct {
                             println!("Difference USER permissions {:?}", diff_users);
 
                             for user in diff_users {
-                                self.delete_user_permission_from_repository(&repo.name, &user)
-                                    .await?;
+                                self.delete_user_permission_from_repository(
+                                    &repo.name,
+                                    &user,
+                                    governor.clone(),
+                                )
+                                .await?;
                             }
 
                             println!();
@@ -324,8 +416,12 @@ pub mod organization_struct {
                                 role: robot.role.to_owned(),
                             });
                             for robot in diff_fixed_robots {
-                                self.delete_user_permission_from_repository(&repo.name, &robot)
-                                    .await?;
+                                self.delete_user_permission_from_repository(
+                                    &repo.name,
+                                    &robot,
+                                    governor.clone(),
+                                )
+                                .await?;
                             }
                             //delete_user_permission_to_repository
                         }
@@ -341,6 +437,9 @@ pub mod organization_struct {
         async fn get_team_permission_from_repository(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/",
@@ -354,6 +453,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::GET,
+                    governor.clone(),
                 )
                 .await?;
 
@@ -405,8 +505,12 @@ pub mod organization_struct {
                             println!("Difference TEAMS permissions {:?}", diff_teams);
 
                             for team in diff_teams {
-                                self.delete_team_permission_from_repository(&repo.name, &team)
-                                    .await?;
+                                self.delete_team_permission_from_repository(
+                                    &repo.name,
+                                    &team,
+                                    governor.clone(),
+                                )
+                                .await?;
                             }
 
                             println!();
@@ -426,6 +530,9 @@ pub mod organization_struct {
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -444,6 +551,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
@@ -453,6 +561,9 @@ pub mod organization_struct {
             &self,
             repo: &String,
             user: &UserElement,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
@@ -468,12 +579,18 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
             Ok(response.clone())
         }
-        async fn delete_organization(&self) -> Result<QuayResponse, Box<dyn Error>> {
+        async fn delete_organization(
+            &self,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}",
                 &self.quay_endpoint, &self.quay_organization
@@ -487,12 +604,19 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
+                    governor,
                 )
                 .await?;
 
             Ok(response.clone())
         }
-        async fn create_robot(&self, robot: &RobotDetails) -> Result<QuayResponse, Box<dyn Error>> {
+        async fn create_robot(
+            &self,
+            robot: &RobotDetails,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/robots/{}",
                 &self.quay_endpoint, &self.quay_organization, robot.name
@@ -512,13 +636,20 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
             Ok(response.clone())
         }
 
-        async fn create_team(&self, team: &Team) -> Result<QuayResponse, Box<dyn Error>> {
+        async fn create_team(
+            &self,
+            team: &Team,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
+        ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}",
                 &self.quay_endpoint, &self.quay_organization, team.name
@@ -540,6 +671,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
@@ -550,6 +682,9 @@ pub mod organization_struct {
             &self,
             team: &String,
             user: &String,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}/members/{}",
@@ -564,6 +699,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
@@ -574,6 +710,9 @@ pub mod organization_struct {
             &self,
             team: &String,
             robot: &String,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}/members/{}",
@@ -591,6 +730,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
+                    governor,
                 )
                 .await?;
 
@@ -599,6 +739,9 @@ pub mod organization_struct {
         async fn create_repository(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/repository", &self.quay_endpoint,);
             let mut body: HashMap<&str, &String> = HashMap::new();
@@ -629,6 +772,7 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::POST,
+                    governor,
                 )
                 .await?;
 
@@ -638,6 +782,9 @@ pub mod organization_struct {
         async fn create_repository_mirror(
             &self,
             repo: &Repository,
+            governor: Arc<
+                RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
+            >,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/mirror",
@@ -716,6 +863,7 @@ pub mod organization_struct {
                             &self.quay_oauth_token,
                             &description,
                             Method::PUT,
+                            governor.clone(),
                         )
                         .await?;
 
@@ -726,6 +874,7 @@ pub mod organization_struct {
                             &self.quay_oauth_token,
                             &description,
                             Method::POST,
+                            governor.clone(),
                         )
                         .await?;
 
@@ -739,6 +888,7 @@ pub mod organization_struct {
                                 &self.quay_oauth_token,
                                 &description,
                                 Method::PUT,
+                                governor,
                             )
                             .await?;
 
@@ -762,7 +912,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Default, Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
         quay_endpoint: String,

@@ -1,18 +1,28 @@
 use super::organization_struct::organization_struct::OrganizationYaml;
-use std::fs::File;
+use governor::clock::{QuantaClock, QuantaInstant};
+use governor::middleware::NoOpMiddleware;
+use governor::state::{InMemoryState, NotKeyed};
+use governor::{self, Quota, RateLimiter};
+use std::num::NonZeroU32;
+use std::{fs::File, sync::Arc};
 use tokio::fs::read_dir;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct QuayXmlConfig {
     organization: Vec<OrganizationYaml>,
     directory: String,
+    governor: Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>>,
 }
 
 impl QuayXmlConfig {
-    pub fn new(directory: String) -> Self {
+    pub fn new(directory: String, req_per_seconds: u32) -> Self {
+        let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
+            NonZeroU32::new(req_per_seconds).unwrap(),
+        )));
         Self {
             organization: vec![],
             directory,
+            governor,
         }
     }
 
@@ -33,4 +43,9 @@ impl QuayXmlConfig {
     pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
         &self.organization
     }
+
+    pub fn get_cloned_governor(&self) -> Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>> {
+        self.governor.clone()
+    }
+
 }
