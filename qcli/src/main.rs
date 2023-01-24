@@ -5,7 +5,7 @@ use env_logger::Env;
 use std::error::Error;
 //use console_subscriber;
 use env_logger;
-use log::debug;
+
 use log::error;
 use log::info;
 use log::warn;
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
 
     let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
-
+    
     match &cli.command {
         SubCommands::Create(_) => {
             //println!("-----");

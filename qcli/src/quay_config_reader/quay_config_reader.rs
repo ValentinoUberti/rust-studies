@@ -7,7 +7,7 @@ use governor::clock::{QuantaClock, QuantaInstant};
 use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::StatusCode;
 use std::error::Error;
 use std::num::NonZeroU32;
@@ -99,8 +99,10 @@ impl QuayXmlConfig {
                     corrected_description.insert_str(0, r.description.as_str());
                 }
 
+                
                 if self.log_level == log::Level::Debug {
-                    info!("{:?}", r);
+                    println!("qui");
+                    debug!("Test");
                 }
                 //println!("------------------------");
                 //println!("{} {}", description, corrected_description);
@@ -142,6 +144,8 @@ impl QuayXmlConfig {
         let mut handles_all_extra_team_permissions = Vec::new();
         let mut handles_all_mirror_configurations = Vec::new();
         let orgs = self.get_organizations();
+
+        debug!("this is a debug {}", "message");
 
         for org in orgs {
             println!(
@@ -270,7 +274,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_organizations);
 
         for result in results.await {
-            //print_result("Organization ->".to_string(), result);
+            self.print_result("Organization ->".to_string(), result);
         }
 
         println!("------------");
@@ -280,7 +284,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_robots);
 
         for result in results.await {
-            //print_result("Robots ->".to_string(), result);
+            self.print_result("Robots ->".to_string(), result);
         }
 
         println!("------------");
@@ -289,7 +293,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_teams);
 
         for result in results.await {
-            //print_result("Teams ->".to_string(), result);
+            self.print_result("Teams ->".to_string(), result);
         }
 
         println!("------------");
@@ -301,7 +305,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_team_members);
 
         for result in results.await {
-            //print_result("Team members ->".to_string(), result);
+            self.print_result("Team members ->".to_string(), result);
         }
 
         println!("------------");
@@ -326,7 +330,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_extra_user_permissions);
 
         for result in results.await {
-            //print_result("Repository USER permissions ->".to_string(), result);
+            self.print_result("Repository USER permissions ->".to_string(), result);
         }
 
         println!("------------");
@@ -349,7 +353,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_repositories_permissions);
 
         for result in results.await {
-            //print_result("Repository permissions ->".to_string(), result);
+            self.print_result("Repository permissions ->".to_string(), result);
         }
 
         println!("------------");
@@ -361,7 +365,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_mirror_configurations);
 
         for result in results.await {
-            //print_result("Repository permissions ->".to_string(), result);
+            self.print_result("Repository permissions ->".to_string(), result);
         }
 
         Ok(())
