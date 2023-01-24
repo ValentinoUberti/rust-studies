@@ -429,7 +429,7 @@ pub mod organization_struct {
                             //println!();
 
                             let mut diff_robots: Vec<UserElement> = actual_repo_permissions.robots;
-                            //println!("Actual ROBOTS permissions {:?}", diff_robots);
+                            debug!("Actual ROBOTS permissions {:?}", diff_robots);
 
                             if let Some(user) = configured_repo.permissions.as_ref() {
                                 for el_permission in &user.robots {

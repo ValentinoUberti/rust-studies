@@ -53,7 +53,6 @@ struct Check {}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();
-    
 
     let cli = Cli::parse();
     let req_per_seconds = 300;
@@ -64,8 +63,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Some(ll) => log_level = ll,
         None => log_level = log::Level::Info,
     }
-    env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
-    
+    //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
+    env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str())).default_format()
+        
+        .init();
     let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
 
     match &cli.command {
