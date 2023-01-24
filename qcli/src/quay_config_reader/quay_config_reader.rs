@@ -1,11 +1,13 @@
 use crate::quay_config_reader::organization_struct::organization_struct::Actions;
 
 use super::organization_struct::organization_struct::{OrganizationYaml, QuayResponse};
+
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
 use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
+use log::{debug, error, info};
 use reqwest::StatusCode;
 use std::error::Error;
 use std::num::NonZeroU32;
@@ -37,11 +39,19 @@ impl QuayXmlConfig {
         let mut files = read_dir(self.directory.to_owned()).await?;
 
         while let Some(f) = files.next_entry().await? {
-            println!("Loading config from  {:?} ", f.file_name());
+            info!("Loading config from  {:?} ", f.file_name());
             let f = File::open(f.path())?;
-            let scrape_config: OrganizationYaml =
-                serde_yaml::from_reader(f).expect("Could not read values.");
-            self.organization.push(scrape_config);
+            //let scrape_config: OrganizationYaml =
+            //    serde_yaml::from_reader(f)
+
+            match serde_yaml::from_reader(f) {
+                Ok(scrape_config) => {
+                    self.organization.push(scrape_config);
+                }
+                Err(e) => {
+                    error!("{:?}", e)
+                }
+            }
         }
 
         Ok(())
@@ -49,15 +59,21 @@ impl QuayXmlConfig {
 
     pub async fn check_config(&self) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
-
         while let Some(f) = files.next_entry().await? {
-            print!("Checking {:?} ", f.file_name());
-            let f = File::open(f.path())?;
-            let _scrape_config: OrganizationYaml =
-                serde_yaml::from_reader(f).expect("Could not read values.");
-            println!("\tOK");
-        }
+            let f2 = File::open(f.path())?;
+            //let scrape_config: OrganizationYaml =
+            //    serde_yaml::from_reader(f)
 
+            let result: Result<OrganizationYaml, serde_yaml::Error> = serde_yaml::from_reader(f2);
+            match result {
+                Ok(_) => {
+                    info!("Config verified from  {:?} ", f.file_name());
+                }
+                Err(e) => {
+                    error!("{:?}", e)
+                }
+            }
+        }
         Ok(())
     }
 
@@ -82,10 +98,14 @@ impl QuayXmlConfig {
                 } else {
                     corrected_description.insert_str(0, r.description.as_str());
                 }
-                println!("------------------------");
-                println!("{} {}", description, corrected_description);
-                println!("Status code: {}", r.status_code);
-                println!("Message: {}", r.response);
+
+                if self.log_level == log::Level::Debug {
+                    info!("{:?}", r);
+                }
+                //println!("------------------------");
+                //println!("{} {}", description, corrected_description);
+                //println!("Status code: {}", r.status_code);
+                //println!("Message: {}", r.response);
             }
             Err(e) => println!("Error: {}", e),
         }
@@ -129,20 +149,30 @@ impl QuayXmlConfig {
                 org.quay_organization
             );
 
-            handles_all_organizations.push(org.create_organization(self.get_cloned_governor()));
+            handles_all_organizations
+                .push(org.create_organization(self.get_cloned_governor(), self.log_level));
             //handles_delete_organization.push(org.delete_organization(self.get_cloned_governor(),self));
 
             for robot in &org.robots {
-                handles_all_robots.push(org.create_robot(robot, self.get_cloned_governor()));
+                handles_all_robots.push(org.create_robot(
+                    robot,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
             }
             for team in &org.teams {
-                handles_all_teams.push(org.create_team(team, self.get_cloned_governor()));
+                handles_all_teams.push(org.create_team(
+                    team,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
 
                 for member in &team.members.users {
                     handles_all_team_members.push(org.add_user_to_team(
                         &team.name,
                         &member,
                         self.get_cloned_governor(),
+                        self.log_level,
                     ))
                 }
 
@@ -151,28 +181,33 @@ impl QuayXmlConfig {
                         &team.name,
                         &member,
                         self.get_cloned_governor(),
+                        self.log_level,
                     ))
                 }
             }
 
             for repository in &org.repositories {
-                handles_all_repositories
-                    .push(org.create_repository(repository, self.get_cloned_governor()));
-                handles_all_extra_user_permissions.push(
-                    org.get_user_permission_from_repository(
-                        &repository,
-                        self.get_cloned_governor(),
-                    ),
-                );
-                handles_all_extra_team_permissions.push(
-                    org.get_team_permission_from_repository(
-                        &repository,
-                        self.get_cloned_governor(),
-                    ),
-                );
+                handles_all_repositories.push(org.create_repository(
+                    repository,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
+                handles_all_extra_user_permissions.push(org.get_user_permission_from_repository(
+                    &repository,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
+                handles_all_extra_team_permissions.push(org.get_team_permission_from_repository(
+                    &repository,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
 
-                handles_all_mirror_configurations
-                    .push(org.create_repository_mirror(&repository, self.get_cloned_governor()));
+                handles_all_mirror_configurations.push(org.create_repository_mirror(
+                    &repository,
+                    self.get_cloned_governor(),
+                    self.log_level,
+                ));
 
                 if let Some(permissions) = &repository.permissions {
                     for robot in &permissions.robots {
@@ -181,6 +216,7 @@ impl QuayXmlConfig {
                                 &repository.name,
                                 &robot,
                                 self.get_cloned_governor(),
+                                self.log_level,
                             ),
                         )
                     }
@@ -192,6 +228,7 @@ impl QuayXmlConfig {
                                     &repository.name,
                                     &t,
                                     self.get_cloned_governor(),
+                                    self.log_level,
                                 ),
                             )
                         }
@@ -202,6 +239,7 @@ impl QuayXmlConfig {
                                 &repository.name,
                                 &user,
                                 self.get_cloned_governor(),
+                                self.log_level,
                             ),
                         )
                     }
@@ -276,7 +314,7 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_repositories);
 
         for result in results.await {
-            //   print_result("Repository ->".to_string(), result);
+            self.print_result("Repository ->".to_string(), result);
         }
 
         println!("------------");

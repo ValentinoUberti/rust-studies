@@ -4,10 +4,10 @@ pub mod organization_struct {
     use governor::clock::{QuantaClock, QuantaInstant};
     use governor::middleware::NoOpMiddleware;
     use governor::state::{InMemoryState, NotKeyed};
-    use governor::{self,RateLimiter};
+    use governor::{self, RateLimiter};
+    use substring::Substring;
     use std::sync::Arc;
     use std::{collections::HashMap, error::Error, time::Duration};
-    use substring::Substring;
 
     use reqwest::{Method, StatusCode};
     use serde::{Deserialize, Serialize};
@@ -27,6 +27,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_user_permission_to_repository(
             &self,
@@ -35,6 +36,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_user_permission_from_repository(
             &self,
@@ -43,6 +45,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
 
         async fn delete_team_permission_from_repository(
@@ -52,6 +55,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn get_user_permission_from_repository(
             &self,
@@ -59,6 +63,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn get_team_permission_from_repository(
             &self,
@@ -66,6 +71,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_robot_permission_to_repository(
             &self,
@@ -74,6 +80,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn grant_team_permission_to_repository(
             &self,
@@ -82,13 +89,14 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn delete_organization(
             &self,
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
-            log_level: log::Level
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_robot(
             &self,
@@ -96,6 +104,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_team(
             &self,
@@ -103,6 +112,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn add_user_to_team(
             &self,
@@ -111,6 +121,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
 
         async fn add_robot_to_team(
@@ -120,6 +131,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_repository(
             &self,
@@ -127,6 +139,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_repository_mirror(
             &self,
@@ -134,6 +147,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn send_request<T>(
             &self,
@@ -145,6 +159,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>>
         where
             T: Serialize + std::marker::Sync,
@@ -161,6 +176,7 @@ pub mod organization_struct {
             let retry_jitter = governor::Jitter::new(Duration::ZERO, Duration::from_millis(1));
             governor.until_ready_with_jitter(retry_jitter).await;
 
+            //println("{:?}",governor.)
             let response_status = api.send().await?;
             let status_code = response_status.status();
             let response = match response_status.json::<serde_json::Value>().await {
@@ -173,6 +189,7 @@ pub mod organization_struct {
                 status_code,
                 description: description.clone(),
             };
+
             Ok(quay_response)
         }
     }
@@ -184,6 +201,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/organization/", &self.quay_endpoint);
             let mut body = HashMap::new();
@@ -197,7 +215,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::POST,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -211,6 +230,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -226,7 +246,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -239,6 +260,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -254,7 +276,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -267,6 +290,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
@@ -283,6 +307,7 @@ pub mod organization_struct {
                     &self.quay_organization,
                     Method::DELETE,
                     governor,
+                    log_level
                 )
                 .await?;
 
@@ -295,6 +320,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/",
@@ -309,6 +335,7 @@ pub mod organization_struct {
                     &self.quay_organization,
                     Method::GET,
                     governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -319,7 +346,7 @@ pub mod organization_struct {
                     //println!();
                     //println!("####################");
                     //println!(
-                     //   "Organization {} :: Repository: {} ",
+                    //   "Organization {} :: Repository: {} ",
                     //    &self.quay_organization, repo.name
                     //);
                     //println!("####################");
@@ -390,6 +417,7 @@ pub mod organization_struct {
                                     &repo.name,
                                     &user,
                                     governor.clone(),
+                                    log_level,
                                 )
                                 .await?;
                             }
@@ -420,6 +448,7 @@ pub mod organization_struct {
                                     &repo.name,
                                     &robot,
                                     governor.clone(),
+                                    log_level,
                                 )
                                 .await?;
                             }
@@ -440,6 +469,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/",
@@ -454,6 +484,7 @@ pub mod organization_struct {
                     &self.quay_organization,
                     Method::GET,
                     governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -466,7 +497,7 @@ pub mod organization_struct {
                     //println!(
                     //    "Organization {} :: Repository: {} ",
                     //    &self.quay_organization, repo.name
-                   // );
+                    // );
                     //println!("####################");
                     //println!();
                     //For team
@@ -509,6 +540,7 @@ pub mod organization_struct {
                                     &repo.name,
                                     &team,
                                     governor.clone(),
+                                    log_level,
                                 )
                                 .await?;
                             }
@@ -533,6 +565,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/user/{}",
@@ -551,7 +584,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -564,6 +598,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/permissions/team/{}",
@@ -579,7 +614,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -590,7 +626,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
-            log_level: log::Level
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}",
@@ -605,7 +641,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::DELETE,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -617,6 +654,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/robots/{}",
@@ -637,7 +675,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -650,6 +689,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}",
@@ -672,7 +712,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -686,6 +727,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}/members/{}",
@@ -700,7 +742,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -714,6 +757,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}/team/{}/members/{}",
@@ -731,7 +775,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &self.quay_organization,
                     Method::PUT,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -743,6 +788,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!("https://{}/api/v1/repository", &self.quay_endpoint,);
             let mut body: HashMap<&str, &String> = HashMap::new();
@@ -773,7 +819,8 @@ pub mod organization_struct {
                     &self.quay_oauth_token,
                     &description,
                     Method::POST,
-                    governor,
+                    governor.clone(),
+                    log_level,
                 )
                 .await?;
 
@@ -786,6 +833,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level,
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/repository/{}/{}/mirror",
@@ -865,6 +913,7 @@ pub mod organization_struct {
                             &description,
                             Method::PUT,
                             governor.clone(),
+                            log_level,
                         )
                         .await?;
 
@@ -876,6 +925,7 @@ pub mod organization_struct {
                             &description,
                             Method::POST,
                             governor.clone(),
+                            log_level,
                         )
                         .await?;
 
@@ -889,7 +939,8 @@ pub mod organization_struct {
                                 &self.quay_oauth_token,
                                 &description,
                                 Method::PUT,
-                                governor,
+                                governor.clone(),
+                                log_level,
                             )
                             .await?;
 
