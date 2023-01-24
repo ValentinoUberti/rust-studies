@@ -5,6 +5,7 @@ pub mod organization_struct {
     use governor::middleware::NoOpMiddleware;
     use governor::state::{InMemoryState, NotKeyed};
     use governor::{self, RateLimiter};
+    use log::{debug, warn};
     use substring::Substring;
     use std::sync::Arc;
     use std::{collections::HashMap, error::Error, time::Duration};
@@ -190,6 +191,9 @@ pub mod organization_struct {
                 description: description.clone(),
             };
 
+            if log_level == log::Level::Debug {
+                debug!("{:?}",quay_response.clone());
+            }
             Ok(quay_response)
         }
     }
@@ -905,7 +909,7 @@ pub mod organization_struct {
 
                     body_state.insert("state", "MIRROR");
 
-                    let response = &self
+                    let _response = &self
                         .send_request(
                             endpoint_state,
                             &body_state,

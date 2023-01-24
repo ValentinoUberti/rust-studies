@@ -7,12 +7,13 @@ use governor::clock::{QuantaClock, QuantaInstant};
 use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use reqwest::StatusCode;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::{fs::File, sync::Arc};
 use tokio::fs::read_dir;
+
 
 #[derive(Debug)]
 pub struct QuayXmlConfig {
@@ -87,7 +88,7 @@ impl QuayXmlConfig {
         self.governor.clone()
     }
 
-    fn print_result(&self, description: String, result: Result<QuayResponse, Box<dyn Error>>) {
+    fn print_result(&self, _description: String, result: Result<QuayResponse, Box<dyn Error>>) {
         match result {
             Ok(r) => {
                 let mut corrected_description = String::new();
@@ -100,25 +101,23 @@ impl QuayXmlConfig {
                 }
 
                 
-                if self.log_level == log::Level::Debug {
-                    println!("qui");
-                    debug!("Test");
-                }
+                info!("{:?}",r);
+
                 //println!("------------------------");
                 //println!("{} {}", description, corrected_description);
                 //println!("Status code: {}", r.status_code);
                 //println!("Message: {}", r.response);
             }
-            Err(e) => println!("Error: {}", e),
+            Err(e) => error!("Error: {}", e),
         }
     }
 
-    pub async fn delete_all(&self, verbosity: u8) -> Result<(), Box<dyn Error>> {
+    pub async fn delete_all(&self) -> Result<(), Box<dyn Error>> {
         let mut handles_delete_organization = Vec::new();
         let orgs = self.get_organizations();
 
         for org in orgs {
-            println!("Processing organization: {}", org.quay_organization);
+            info!("Processing organization: {}", org.quay_organization);
 
             handles_delete_organization
                 .push(org.delete_organization(self.get_cloned_governor(), self.log_level));
@@ -132,7 +131,7 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    pub async fn create_all(&self, verbosity: u8) -> Result<(), Box<dyn Error>> {
+    pub async fn create_all(&self,) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
         // let mut handles_delete_organization = Vec::new();
         let mut handles_all_robots = Vec::new();
@@ -148,14 +147,14 @@ impl QuayXmlConfig {
         debug!("this is a debug {}", "message");
 
         for org in orgs {
-            println!(
+            info!(
                 "Processing config for organization: {}",
                 org.quay_organization
             );
 
             handles_all_organizations
                 .push(org.create_organization(self.get_cloned_governor(), self.log_level));
-            //handles_delete_organization.push(org.delete_organization(self.get_cloned_governor(),self));
+            
 
             for robot in &org.robots {
                 handles_all_robots.push(org.create_robot(
@@ -261,12 +260,12 @@ impl QuayXmlConfig {
             + handles_all_extra_team_permissions.len()
             + (handles_all_mirror_configurations.len() * 3);
 
-        println!("------------");
-        println!("TOTAL REQUESTS : {}", total_requestes);
+        
+        info!("TOTAL REQUESTS : {}", total_requestes);
 
-        println!("------------");
+       
         // Create organization
-        println!(
+        info!(
             "Creating {} organization cuncurrently",
             handles_all_organizations.len()
         );
@@ -277,9 +276,9 @@ impl QuayXmlConfig {
             self.print_result("Organization ->".to_string(), result);
         }
 
-        println!("------------");
+   
         // Create robots
-        println!("Creating {} robots cuncurrently", handles_all_robots.len());
+        info!("Creating {} robots cuncurrently", handles_all_robots.len());
 
         let results = join_all(handles_all_robots);
 
@@ -287,18 +286,18 @@ impl QuayXmlConfig {
             self.print_result("Robots ->".to_string(), result);
         }
 
-        println!("------------");
+      
         // Create teams
-        println!("Creating {} teams cuncurrently", handles_all_teams.len());
+        info!("Creating {} teams cuncurrently", handles_all_teams.len());
         let results = join_all(handles_all_teams);
 
         for result in results.await {
             self.print_result("Teams ->".to_string(), result);
         }
 
-        println!("------------");
+    
         // Adding team members
-        println!(
+        info!(
             "Adding {} team members cuncurrently",
             handles_all_team_members.len()
         );
@@ -308,9 +307,9 @@ impl QuayXmlConfig {
             self.print_result("Team members ->".to_string(), result);
         }
 
-        println!("------------");
+    
         // Create repositories
-        println!(
+        info!(
             "Creating {} repositories cuncurrently",
             handles_all_repositories.len()
         );
@@ -321,9 +320,9 @@ impl QuayXmlConfig {
             self.print_result("Repository ->".to_string(), result);
         }
 
-        println!("------------");
+       
         //  Get user currently repositories permission (IF ANY)
-        println!(
+        info!(
             "Delete extra user and robot permission from {} repository cuncurrently",
             handles_all_extra_user_permissions.len()
         );
@@ -333,20 +332,20 @@ impl QuayXmlConfig {
             self.print_result("Repository USER permissions ->".to_string(), result);
         }
 
-        println!("------------");
+  
         // Get currently team repositories permission (IF ANY)
-        println!(
+        info!(
             "Delete extra team permission from {} repository cuncurrently",
             handles_all_extra_team_permissions.len()
         );
         let results = join_all(handles_all_extra_team_permissions);
 
         for result in results.await {
-            // print_result("Repository TEAM permissions ->".to_string(), result);
+             self.print_result("Repository TEAM permissions ->".to_string(), result);
         }
-        println!("------------");
+  ;
         // Create repositories permission
-        println!(
+        info!(
             "Creating {} repositories permissions cuncurrently",
             handles_all_repositories_permissions.len()
         );
@@ -356,9 +355,9 @@ impl QuayXmlConfig {
             self.print_result("Repository permissions ->".to_string(), result);
         }
 
-        println!("------------");
+       
         // Configure repository mirror
-        println!(
+        info!(
             "Configuring {} repositories mirror concurrently",
             handles_all_mirror_configurations.len()
         );
