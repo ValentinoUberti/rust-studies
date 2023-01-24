@@ -17,10 +17,11 @@ pub struct QuayXmlConfig {
     organization: Vec<OrganizationYaml>,
     directory: String,
     governor: Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>>,
+    log_level: log::Level,
 }
 
 impl QuayXmlConfig {
-    pub fn new(directory: &String, req_per_seconds: u32) -> Self {
+    pub fn new(directory: &String, req_per_seconds: u32, log_level: log::Level) -> Self {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
         )));
@@ -28,6 +29,7 @@ impl QuayXmlConfig {
             organization: vec![],
             directory: directory.clone(),
             governor,
+            log_level,
         }
     }
 
@@ -47,8 +49,6 @@ impl QuayXmlConfig {
 
     pub async fn check_config(&self) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
-
-        
 
         while let Some(f) = files.next_entry().await? {
             print!("Checking {:?} ", f.file_name());
@@ -75,7 +75,7 @@ impl QuayXmlConfig {
         match result {
             Ok(r) => {
                 let mut corrected_description = String::new();
-                
+
                 if r.status_code == StatusCode::NO_CONTENT {
                     // 204 from success delete organization
                     corrected_description.insert_str(0, "No Content success");
@@ -98,7 +98,8 @@ impl QuayXmlConfig {
         for org in orgs {
             println!("Processing organization: {}", org.quay_organization);
 
-            handles_delete_organization.push(org.delete_organization(self.get_cloned_governor()));
+            handles_delete_organization
+                .push(org.delete_organization(self.get_cloned_governor(), self.log_level));
         }
         let results = join_all(handles_delete_organization);
 
@@ -111,7 +112,7 @@ impl QuayXmlConfig {
 
     pub async fn create_all(&self, verbosity: u8) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
-        let mut handles_delete_organization = Vec::new();
+        // let mut handles_delete_organization = Vec::new();
         let mut handles_all_robots = Vec::new();
         let mut handles_all_teams = Vec::new();
         let mut handles_all_repositories = Vec::new();
@@ -123,10 +124,13 @@ impl QuayXmlConfig {
         let orgs = self.get_organizations();
 
         for org in orgs {
-            println!("Processing config for organization: {}", org.quay_organization);
+            println!(
+                "Processing config for organization: {}",
+                org.quay_organization
+            );
 
             handles_all_organizations.push(org.create_organization(self.get_cloned_governor()));
-            handles_delete_organization.push(org.delete_organization(self.get_cloned_governor()));
+            //handles_delete_organization.push(org.delete_organization(self.get_cloned_governor(),self));
 
             for robot in &org.robots {
                 handles_all_robots.push(org.create_robot(robot, self.get_cloned_governor()));
@@ -206,7 +210,6 @@ impl QuayXmlConfig {
         }
 
         let total_requestes = handles_all_organizations.len()
-            + handles_delete_organization.len()
             + handles_all_robots.len()
             + handles_all_teams.len()
             + handles_all_repositories.len()

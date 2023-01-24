@@ -8,3 +8,7 @@ Logging
 - https://medium.com/nerd-for-tech/logging-in-rust-e529c241f92e
 
 
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;

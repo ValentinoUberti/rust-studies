@@ -20,5 +20,7 @@ substring = "1.4.5"
 chrono = "0.4.23"
 governor = "0.5.1"
 indicatif = "0.17.3"
+log = "0.4.17"
+env_logger = "0.10.0"
 
 

@@ -88,6 +88,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level
         ) -> Result<QuayResponse, Box<dyn Error>>;
         async fn create_robot(
             &self,
@@ -589,6 +590,7 @@ pub mod organization_struct {
             governor: Arc<
                 RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>,
             >,
+            log_level: log::Level
         ) -> Result<QuayResponse, Box<dyn Error>> {
             let endpoint = format!(
                 "https://{}/api/v1/organization/{}",

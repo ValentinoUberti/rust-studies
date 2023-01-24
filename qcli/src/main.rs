@@ -3,6 +3,10 @@ mod quay_config_reader;
 use clap::{Args, Parser, Subcommand};
 use std::error::Error;
 //use console_subscriber;
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;
 
 use crate::quay_config_reader::quay_config_reader::QuayXmlConfig;
 
@@ -23,6 +27,10 @@ struct Cli {
 
     #[arg(short, long)]
     dir: String,
+
+    #[arg(short, long)]
+    /// Accepted log level: info, debug
+    log_level: Option<log::Level>,
 }
 
 #[derive(Subcommand)]
@@ -45,9 +53,20 @@ struct Check {}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();
+    env_logger::init();
     let cli = Cli::parse();
     let req_per_seconds = 150;
-    let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds);
+
+    let log_level: log::Level;
+    
+    match cli.log_level {
+        Some(ll) => log_level=ll,
+        None => log_level=log::Level::Info,
+    }
+
+    println!("{}",log_level);
+
+    let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
 
     match &cli.command {
         SubCommands::Create(_) => {
@@ -65,8 +84,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
             config.create_all(1).await?;
         }
         SubCommands::Delete(_) => {
+            println!("-----");
+            println!("Checking quay configurations file in {} directory...",&cli.dir);
+            println!("-----");
             config.check_config().await?;
+            println!("-----");
+            println!("Loading quay configurations file in {} directory...",&cli.dir);
+            println!("-----");
             config.load_config().await?;
+            println!("-----");
+            println!("Creating quay configurations...");
+            println!("-----");
             config.delete_all(1).await?;
         }
         SubCommands::Check(_) => {
