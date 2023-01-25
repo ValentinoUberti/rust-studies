@@ -12,7 +12,7 @@ use log::{debug, error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::io::{stdin, self};
+use std::io::{stdin, self, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::{fs::File, sync::Arc};
@@ -112,13 +112,14 @@ impl QuayXmlConfig {
 
             for q in quay_endopoints {
                
-                println!("Insert token for {}: ", q);
+                print!("Insert token for {}: ", q);
+                io::stdout().flush();
                 let mut token = String::new();
                 io::stdin().read_line(&mut token)?;
 
                 let endpoint = QuayEndopoint {
                     quay_endpoint: q,
-                    quay_token: token,
+                    quay_token: token.trim().to_string(),
                 };
 
                 logins.quay_endopoint_login.push(endpoint);
