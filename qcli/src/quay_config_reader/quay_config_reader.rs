@@ -2,19 +2,21 @@ use crate::quay_config_reader::organization_struct::organization_struct::Actions
 
 use super::organization_struct::organization_struct::{OrganizationYaml, QuayResponse};
 
+use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
 use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::io::{stdin, self};
 use std::num::NonZeroU32;
+use std::path::Path;
 use std::{fs::File, sync::Arc};
-use tokio::fs::read_dir;
-use array_tool::vec::Uniq;
-
+use tokio::fs::{self, read_dir, write};
 
 #[derive(Debug)]
 pub struct QuayXmlConfig {
@@ -79,24 +81,60 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
+        let mut quay_endopoints: Vec<String> = Vec::new();
 
-       let mut quay_endopoints :Vec<String>= Vec::new();
-       
         for org in self.organization {
             quay_endopoints.push(org.quay_endpoint.clone());
-       }
+        }
 
-       quay_endopoints = quay_endopoints.unique();
+        quay_endopoints = quay_endopoints.unique();
 
-       info!("Found {} unique Quay endpoint(s)",quay_endopoints.len());
+        info!("Found {} unique Quay endpoint(s)", quay_endopoints.len());
+
+        // Checking if .qcli directory exists and creating it if does not.
+
+        let login_directory = ".qcli";
+        let login_file = "login.yaml";
+
+        if !Path::new(login_directory).is_dir() {
+            info!(".qcli directory does not exists. Creating...");
+            fs::create_dir(login_directory).await?;
+            info!(".qcli directory created.");
+        } else {
+            info!(".qcli directory exists.")
+        }
+
+        if !std::path::Path::new(login_file).exists() {
+            warn!("{} does not exits. Creating...", login_file);
+
+            let mut logins = QuayLoginConfigs::default();
+
+            for q in quay_endopoints {
+               
+                println!("Insert token for {}: ", q);
+                let mut token = String::new();
+                io::stdin().read_line(&mut token)?;
+
+                let endpoint = QuayEndopoint {
+                    quay_endpoint: q,
+                    quay_token: token,
+                };
+
+                logins.quay_endopoint_login.push(endpoint);
+            }
+
+            let f = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(format!("{}/{}", login_directory, login_file))?;
+
+            serde_yaml::to_writer(f, &logins)?;
+        }
 
         Ok(())
     }
 
-    
-    
     pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
         &self.organization
     }
@@ -119,8 +157,7 @@ impl QuayXmlConfig {
                     corrected_description.insert_str(0, r.description.as_str());
                 }
 
-                
-                info!("{:?}",r);
+                info!("{:?}", r);
 
                 //println!("------------------------");
                 //println!("{} {}", description, corrected_description);
@@ -150,7 +187,7 @@ impl QuayXmlConfig {
         Ok(())
     }
 
-    pub async fn create_all(&self,) -> Result<(), Box<dyn Error>> {
+    pub async fn create_all(&self) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
         // let mut handles_delete_organization = Vec::new();
         let mut handles_all_robots = Vec::new();
@@ -173,7 +210,6 @@ impl QuayXmlConfig {
 
             handles_all_organizations
                 .push(org.create_organization(self.get_cloned_governor(), self.log_level));
-            
 
             for robot in &org.robots {
                 handles_all_robots.push(org.create_robot(
@@ -279,10 +315,8 @@ impl QuayXmlConfig {
             + handles_all_extra_team_permissions.len()
             + (handles_all_mirror_configurations.len() * 3);
 
-        
         info!("TOTAL REQUESTS : {}", total_requestes);
 
-       
         // Create organization
         info!(
             "Creating {} organization cuncurrently",
@@ -295,7 +329,6 @@ impl QuayXmlConfig {
             self.print_result("Organization ->".to_string(), result);
         }
 
-   
         // Create robots
         info!("Creating {} robots cuncurrently", handles_all_robots.len());
 
@@ -305,7 +338,6 @@ impl QuayXmlConfig {
             self.print_result("Robots ->".to_string(), result);
         }
 
-      
         // Create teams
         info!("Creating {} teams cuncurrently", handles_all_teams.len());
         let results = join_all(handles_all_teams);
@@ -314,7 +346,6 @@ impl QuayXmlConfig {
             self.print_result("Teams ->".to_string(), result);
         }
 
-    
         // Adding team members
         info!(
             "Adding {} team members cuncurrently",
@@ -326,7 +357,6 @@ impl QuayXmlConfig {
             self.print_result("Team members ->".to_string(), result);
         }
 
-    
         // Create repositories
         info!(
             "Creating {} repositories cuncurrently",
@@ -339,7 +369,6 @@ impl QuayXmlConfig {
             self.print_result("Repository ->".to_string(), result);
         }
 
-       
         //  Get user currently repositories permission (IF ANY)
         info!(
             "Delete extra user and robot permission from {} repository cuncurrently",
@@ -351,7 +380,6 @@ impl QuayXmlConfig {
             self.print_result("Repository USER permissions ->".to_string(), result);
         }
 
-  
         // Get currently team repositories permission (IF ANY)
         info!(
             "Delete extra team permission from {} repository cuncurrently",
@@ -360,9 +388,8 @@ impl QuayXmlConfig {
         let results = join_all(handles_all_extra_team_permissions);
 
         for result in results.await {
-             self.print_result("Repository TEAM permissions ->".to_string(), result);
+            self.print_result("Repository TEAM permissions ->".to_string(), result);
         }
-  ;
         // Create repositories permission
         info!(
             "Creating {} repositories permissions cuncurrently",
@@ -374,7 +401,6 @@ impl QuayXmlConfig {
             self.print_result("Repository permissions ->".to_string(), result);
         }
 
-       
         // Configure repository mirror
         info!(
             "Configuring {} repositories mirror concurrently",
@@ -391,4 +417,15 @@ impl QuayXmlConfig {
 
         */
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct QuayLoginConfigs {
+    pub quay_endopoint_login: Vec<QuayEndopoint>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct QuayEndopoint {
+    quay_endpoint: String,
+    quay_token: String,
 }
