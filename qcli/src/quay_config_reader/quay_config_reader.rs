@@ -13,6 +13,7 @@ use std::error::Error;
 use std::num::NonZeroU32;
 use std::{fs::File, sync::Arc};
 use tokio::fs::read_dir;
+use array_tool::vec::Uniq;
 
 
 #[derive(Debug)]
@@ -78,6 +79,24 @@ impl QuayXmlConfig {
         Ok(())
     }
 
+    
+    pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
+
+       let mut quay_endopoints :Vec<String>= Vec::new();
+       
+        for org in self.organization {
+            quay_endopoints.push(org.quay_endpoint.clone());
+       }
+
+       quay_endopoints = quay_endopoints.unique();
+
+       info!("Found {} unique Quay endpoint(s)",quay_endopoints.len());
+
+        Ok(())
+    }
+
+    
+    
     pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
         &self.organization
     }

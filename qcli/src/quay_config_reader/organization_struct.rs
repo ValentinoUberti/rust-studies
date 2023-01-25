@@ -971,7 +971,7 @@ pub mod organization_struct {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
-        quay_endpoint: String,
+        pub quay_endpoint: String,
 
         #[serde(rename = "quay_oauth_token")]
         quay_oauth_token: String,

@@ -1,12 +1,13 @@
 #![deny(elided_lifetimes_in_paths)]
 mod quay_config_reader;
 use clap::{Args, Parser, Subcommand};
-use env_logger::Env;
+use env_logger::{Env, Target, fmt::Color};
 use std::error::Error;
 //use console_subscriber;
 use env_logger;
+use std::io::Write;
 
-use log::info;
+use log::{info, Level};
 
 use crate::quay_config_reader::quay_config_reader::QuayXmlConfig;
 
@@ -73,8 +74,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
     env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str()))
-        .default_format()
+        .target(Target::Stdout).format(|buf, record| {
+            
+            let mut level_style = buf.style();
+
+            match record.level() { 
+                Level::Info => level_style.set_color(Color::Green).set_bold(true),
+                Level::Debug => level_style.set_color(Color::Blue).set_bold(true),
+                Level::Warn => level_style.set_color(Color::Yellow).set_bold(true),
+                Level::Error => level_style.set_color(Color::Red).set_bold(true),
+                Level::Trace => level_style.set_color(Color::Black).set_bold(true),
+            };
+
+
+            
+            writeln!(buf, "[{} {}]: {}",
+                buf.timestamp(),
+                level_style.value(record.level()),
+                record.args())
+        })
         .init();
+
+        
+
+
+
+
     let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
 
     match &cli.command {
@@ -125,7 +150,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
             config.check_config().await?;
         }
         SubCommands::Login(_) => {
-            todo!()
+            info!(
+                "Creating Quay login info from  {} directory...",
+                &cli.dir
+            );
+            config.check_config().await?;
+            config.load_config().await?;
+            config.create_login().await?;
+
         }
     }
     Ok(())
