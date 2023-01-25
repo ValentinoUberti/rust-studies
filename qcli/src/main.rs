@@ -26,6 +26,7 @@ struct Cli {
     command: SubCommands,
 
     #[arg(short, long)]
+    /// Quay yaml directory [REQUIRED]
     dir: String,
 
     #[arg(short, long)]
@@ -35,11 +36,18 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum SubCommands {
-    /// Adds files to myapp
+    /// Create all Quay organizations
     Create(Create),
+    /// Delete all Quay organizations
     Delete(Delete),
+    /// Check all Quay organizations yaml files
     Check(Check),
+    /// Login to detected Quay organizations
+    Login(Login),
 }
+
+#[derive(Args)]
+struct Login {}
 
 #[derive(Args)]
 struct Create {}
@@ -64,60 +72,60 @@ async fn main() -> Result<(), Box<dyn Error>> {
         None => log_level = log::Level::Info,
     }
     //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
-    env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str())).default_format()
-        
+    env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str()))
+        .default_format()
         .init();
     let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
 
     match &cli.command {
         SubCommands::Create(_) => {
-            //println!("-----");
             info!(
                 "Checking quay configurations file in {} directory...",
                 &cli.dir
             );
-            //println!("-----");
+
             config.check_config().await?;
-            //println!("-----");
+
             info!(
                 "Loading quay configurations file in {} directory...",
                 &cli.dir
             );
-            //println!("-----");
+
             config.load_config().await?;
-            //println!("-----");
+
             info!("Creating quay configurations...");
-            //println!("-----");
+
             config.create_all().await?;
         }
         SubCommands::Delete(_) => {
-            println!("-----");
-            println!(
+            info!(
                 "Checking quay configurations file in {} directory...",
                 &cli.dir
             );
-            println!("-----");
+
             config.check_config().await?;
-            println!("-----");
-            println!(
+
+            info!(
                 "Loading quay configurations file in {} directory...",
                 &cli.dir
             );
-            println!("-----");
+
             config.load_config().await?;
-            println!("-----");
-            println!("Creating quay configurations...");
-            println!("-----");
+
+            info!("Creating quay configurations...");
+
             config.delete_all().await?;
         }
         SubCommands::Check(_) => {
-            println!("-----");
-            println!(
+            info!(
                 "Checking quay configurations file in {} directory...",
                 &cli.dir
             );
-            println!("-----");
+
             config.check_config().await?;
+        }
+        SubCommands::Login(_) => {
+            todo!()
         }
     }
     Ok(())
