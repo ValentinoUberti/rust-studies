@@ -66,10 +66,32 @@ impl QuayXmlConfig {
             match serde_yaml::from_reader(f) {
                 Ok(scrape_config) => {
                     self.organization.push(scrape_config);
+
+                    //Check if replicated
+                    
+
+
                 }
                 Err(e) => {
                     error!("{:?}", e)
                 }
+            }
+        }
+
+        let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
+
+        let tmp_organization = self.organization.clone();
+
+        for org in &tmp_organization {
+            match &org.replicate_to {
+                Some(replicated_to) => {
+                    for endpoint in replicated_to {
+                       let mut new_org= org.clone();
+                       new_org.change_endpoint(endpoint.to_string());
+                       self.organization.push(new_org);
+                    }
+                }
+                None => {}
             }
         }
 
@@ -158,6 +180,8 @@ impl QuayXmlConfig {
     }
 
     pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
+
+        
         &self.organization
     }
 
@@ -209,6 +233,27 @@ impl QuayXmlConfig {
         Ok(())
     }
 
+   
+    fn add_replicated(&self) -> Vec<OrganizationYaml> {
+
+        let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
+
+        for org in &self.organization {
+            match &org.replicate_to {
+                Some(replicated_to) => {
+                    for endpoint in replicated_to {
+                       let mut new_org= org.clone();
+                       new_org.change_endpoint(endpoint.to_string());
+                       org_to_add.push(new_org);
+                    }
+                }
+                None => {}
+            }
+        }
+
+        org_to_add
+    }
+
     pub async fn create_all(&self) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
         // let mut handles_delete_organization = Vec::new();
@@ -220,9 +265,24 @@ impl QuayXmlConfig {
         let mut handles_all_extra_user_permissions = Vec::new();
         let mut handles_all_extra_team_permissions = Vec::new();
         let mut handles_all_mirror_configurations = Vec::new();
-        let orgs = self.get_organizations();
+        
+        let mut orgs = self.get_organizations();
+        let replicate_to = self.add_replicated();
 
-        debug!("this is a debug {}", "message");
+        
+
+        //total_orgs.extend(orgs.iter().cloned());
+
+        // new_orgs=self.add_replicated()
+        //
+        // Expands orgs with replicated quay
+        //
+        
+       
+      
+
+        //println!("this is a debug {:?}", replicate_to);
+    
 
         for org in orgs {
             info!(

@@ -23,6 +23,8 @@ pub mod organization_struct {
 
     #[async_trait]
     pub trait Actions {
+       
+    
         async fn create_organization(
             &self,
             governor: Arc<
@@ -217,7 +219,7 @@ pub mod organization_struct {
                     endpoint,
                     &body,
                     &self.quay_oauth_token,
-                    &self.quay_organization,
+                    &format!("Org: {} Endpoint: {}",&self.quay_organization,&self.quay_endpoint),
                     Method::POST,
                     governor.clone(),
                     log_level,
@@ -968,7 +970,13 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    impl OrganizationYaml {
+        pub fn change_endpoint(&mut self, endpoint: String) {
+            self.quay_endpoint = endpoint;
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug,Clone)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
         pub quay_endpoint: String,
@@ -1001,7 +1009,7 @@ pub mod organization_struct {
         pub teams: Vec<Team>,
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq,Clone)]
     pub struct Repository {
         #[serde(rename = "name")]
         pub name: String,
@@ -1098,7 +1106,7 @@ pub mod organization_struct {
         pub rule_value: Vec<String>,
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq,Clone)]
     pub struct MirrorParams {
         #[serde(rename = "src_registry")]
         src_registry: String,
@@ -1140,7 +1148,7 @@ pub mod organization_struct {
         ext_registry_password: Option<String>,
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq,Clone)]
     pub struct Permissions {
         #[serde(rename = "robots")]
         pub robots: Vec<UserElement>,
@@ -1162,7 +1170,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq,Clone)]
     pub struct UserElement {
         #[serde(rename = "name")]
         pub name: String,
@@ -1177,7 +1185,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug,Clone)]
     pub struct RobotDetails {
         #[serde(rename = "name")]
         pub name: String,
@@ -1186,7 +1194,7 @@ pub mod organization_struct {
         pub desc: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug,Clone)]
     pub struct Team {
         #[serde(rename = "name")]
         pub name: String,
@@ -1201,7 +1209,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug,Clone)]
     pub struct Members {
         #[serde(rename = "users")]
         pub users: Vec<String>,
