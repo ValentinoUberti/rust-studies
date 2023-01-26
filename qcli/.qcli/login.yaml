@@ -1,4 +1,7 @@
 ---
-quay_endopoint_login:
+quay_endpoint_login:
   - quay_endpoint: example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb
     quay_token: 8P6fjleOVjXhtBnU3oEHlK6MclwPdGyfmbj3NZof
+  - quay_endpoint: example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb
+    quay_token: 8P6fjleOVjXhtBnU3oEHlK6MclwPdGyfmbj3NZof
+  

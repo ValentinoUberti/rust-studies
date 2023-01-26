@@ -12,7 +12,7 @@ use log::{debug, error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::io::{stdin, self, Write};
+use std::io::{self, stdin, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::{fs::File, sync::Arc};
@@ -24,19 +24,34 @@ pub struct QuayXmlConfig {
     directory: String,
     governor: Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>>,
     log_level: log::Level,
+    quay_login_configs: QuayLoginConfigs,
 }
 
 impl QuayXmlConfig {
-    pub fn new(directory: &String, req_per_seconds: u32, log_level: log::Level) -> Self {
+    pub fn new(
+        directory: &String,
+        req_per_seconds: u32,
+        log_level: log::Level,
+    ) -> Result<Self, Box<dyn Error>> {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
         )));
-        Self {
-            organization: vec![],
-            directory: directory.clone(),
-            governor,
-            log_level,
-        }
+
+        let quay_configs_file = File::open(".qcli/login.yaml")?;
+
+        match serde_yaml::from_reader(quay_configs_file) {
+            Ok(quay_login_configs) => {
+            return Ok(Self {
+                organization: vec![],
+                directory: directory.clone(),
+                governor,
+                log_level,
+                quay_login_configs
+                
+            });
+        }, 
+        Err(e) => return Err(Box::new(e)),
+    }
     }
 
     pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
@@ -82,15 +97,22 @@ impl QuayXmlConfig {
     }
 
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
-        let mut quay_endopoints: Vec<String> = Vec::new();
+        let mut quay_endpoints: Vec<String> = Vec::new();
 
         for org in self.organization {
-            quay_endopoints.push(org.quay_endpoint.clone());
+            quay_endpoints.push(org.quay_endpoint.clone());
+            
+            match org.replicate_to {
+                Some(replicated_to) => {
+                    quay_endpoints.extend(replicated_to);
+                }
+                None => {}
+            }
         }
 
-        quay_endopoints = quay_endopoints.unique();
+        quay_endpoints = quay_endpoints.unique();
 
-        info!("Found {} unique Quay endpoint(s)", quay_endopoints.len());
+        info!("Found {} unique Quay endpoint(s)", quay_endpoints.len());
 
         // Checking if .qcli directory exists and creating it if does not.
 
@@ -110,8 +132,7 @@ impl QuayXmlConfig {
 
             let mut logins = QuayLoginConfigs::default();
 
-            for q in quay_endopoints {
-               
+            for q in quay_endpoints {
                 print!("Insert token for {}: ", q);
                 io::stdout().flush();
                 let mut token = String::new();
@@ -122,7 +143,7 @@ impl QuayXmlConfig {
                     quay_token: token.trim().to_string(),
                 };
 
-                logins.quay_endopoint_login.push(endpoint);
+                logins.quay_endpoint_login.push(endpoint);
             }
 
             let f = std::fs::OpenOptions::new()
@@ -422,7 +443,7 @@ impl QuayXmlConfig {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct QuayLoginConfigs {
-    pub quay_endopoint_login: Vec<QuayEndopoint>,
+    pub quay_endpoint_login: Vec<QuayEndopoint>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]

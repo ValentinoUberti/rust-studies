@@ -1,7 +1,8 @@
 #![deny(elided_lifetimes_in_paths)]
 mod quay_config_reader;
 use clap::{Args, Parser, Subcommand};
-use env_logger::{Env, Target, fmt::Color};
+use core::panic;
+use env_logger::{fmt::Color, Env, Target};
 use std::error::Error;
 //use console_subscriber;
 use env_logger;
@@ -74,11 +75,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
     env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str()))
-        .target(Target::Stdout).format(|buf, record| {
-            
+        .target(Target::Stdout)
+        .format(|buf, record| {
             let mut level_style = buf.style();
 
-            match record.level() { 
+            match record.level() {
                 Level::Info => level_style.set_color(Color::Green).set_bold(true),
                 Level::Debug => level_style.set_color(Color::Blue).set_bold(true),
                 Level::Warn => level_style.set_color(Color::Yellow).set_bold(true),
@@ -86,21 +87,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 Level::Trace => level_style.set_color(Color::Black).set_bold(true),
             };
 
-
-            
-            writeln!(buf, "[{} {}]: {}",
+            writeln!(
+                buf,
+                "[{} {}]: {}",
                 buf.timestamp(),
                 level_style.value(record.level()),
-                record.args())
+                record.args()
+            )
         })
         .init();
 
-        
-
-
-
-
-    let mut config = QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level);
+    let mut config: QuayXmlConfig;
+    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level) {
+        Ok(c) => {
+            config = c;
+            info!("Basic config successfully loaded")
+        }
+        Err(e) => panic!("{}", e.to_string()),
+    }
 
     match &cli.command {
         SubCommands::Create(_) => {
@@ -150,14 +154,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             config.check_config().await?;
         }
         SubCommands::Login(_) => {
-            info!(
-                "Creating Quay login info from  {} directory...",
-                &cli.dir
-            );
+            info!("Creating Quay login info from  {} directory...", &cli.dir);
             config.check_config().await?;
             config.load_config().await?;
             config.create_login().await?;
-
         }
     }
     Ok(())
