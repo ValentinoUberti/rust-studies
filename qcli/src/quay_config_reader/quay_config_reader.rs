@@ -78,7 +78,7 @@ impl QuayXmlConfig {
             }
         }
 
-        let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
+       // let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
 
         let tmp_organization = self.organization.clone();
 
@@ -88,7 +88,13 @@ impl QuayXmlConfig {
                     for endpoint in replicated_to {
                        let mut new_org= org.clone();
                        new_org.change_endpoint(endpoint.to_string());
-                       self.organization.push(new_org);
+                       if (!self.organization.contains(&new_org)) {
+                           self.organization.push(new_org);
+                       } else {
+                        let str_error=format!("Endpoint replication {} already present as a main Quay organization {} with endpoint {}. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
+                        warn!("{}", str_error);
+                       }
+                       
                     }
                 }
                 None => {}

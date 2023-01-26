@@ -976,7 +976,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug,Clone)]
+    #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
     pub struct OrganizationYaml {
         #[serde(rename = "quay_endpoint")]
         pub quay_endpoint: String,
@@ -1185,7 +1185,7 @@ pub mod organization_struct {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug,Clone)]
+    #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
     pub struct RobotDetails {
         #[serde(rename = "name")]
         pub name: String,
@@ -1194,7 +1194,7 @@ pub mod organization_struct {
         pub desc: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug,Clone)]
+    #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
     pub struct Team {
         #[serde(rename = "name")]
         pub name: String,
@@ -1209,7 +1209,7 @@ pub mod organization_struct {
         role: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug,Clone)]
+    #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
     pub struct Members {
         #[serde(rename = "users")]
         pub users: Vec<String>,
