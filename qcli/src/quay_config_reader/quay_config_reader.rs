@@ -91,7 +91,7 @@ impl QuayXmlConfig {
                        if (!self.organization.contains(&new_org)) {
                            self.organization.push(new_org);
                        } else {
-                        let str_error=format!("Endpoint replication {} already present as a main Quay organization {} with endpoint {}. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
+                        let str_error=format!("Endpoint replication '{}' already present as a main Quay organization '{}' with endpoint '{}'. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
                         warn!("{}", str_error);
                        }
                        
@@ -108,9 +108,7 @@ impl QuayXmlConfig {
         let mut files = read_dir(self.directory.to_owned()).await?;
         while let Some(f) = files.next_entry().await? {
             let f2 = File::open(f.path())?;
-            //let scrape_config: OrganizationYaml =
-            //    serde_yaml::from_reader(f)
-
+           
             let result: Result<OrganizationYaml, serde_yaml::Error> = serde_yaml::from_reader(f2);
             match result {
                 Ok(_) => {
@@ -161,8 +159,8 @@ impl QuayXmlConfig {
             let mut logins = QuayLoginConfigs::default();
 
             for q in quay_endpoints {
-                print!("Insert token for {}: ", q);
-                io::stdout().flush();
+                print!("Please insert token for {}: ", q);
+                io::stdout().flush()?;
                 let mut token = String::new();
                 io::stdin().read_line(&mut token)?;
 
@@ -240,25 +238,7 @@ impl QuayXmlConfig {
     }
 
    
-    fn add_replicated(&self) -> Vec<OrganizationYaml> {
-
-        let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
-
-        for org in &self.organization {
-            match &org.replicate_to {
-                Some(replicated_to) => {
-                    for endpoint in replicated_to {
-                       let mut new_org= org.clone();
-                       new_org.change_endpoint(endpoint.to_string());
-                       org_to_add.push(new_org);
-                    }
-                }
-                None => {}
-            }
-        }
-
-        org_to_add
-    }
+    
 
     pub async fn create_all(&self) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
@@ -273,22 +253,7 @@ impl QuayXmlConfig {
         let mut handles_all_mirror_configurations = Vec::new();
         
         let mut orgs = self.get_organizations();
-        let replicate_to = self.add_replicated();
-
-        
-
-        //total_orgs.extend(orgs.iter().cloned());
-
-        // new_orgs=self.add_replicated()
-        //
-        // Expands orgs with replicated quay
-        //
-        
-       
-      
-
-        //println!("this is a debug {:?}", replicate_to);
-    
+          
 
         for org in orgs {
             info!(

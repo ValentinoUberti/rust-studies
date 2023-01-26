@@ -152,6 +152,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
             );
 
             config.check_config().await?;
+
+            info!(
+                "Loading quay configurations file in {} directory...",
+                &cli.dir
+            );
+            config.load_config().await?;
+
+            
         }
         SubCommands::Login(_) => {
             info!("Creating Quay login info from  {} directory...", &cli.dir);
