@@ -1,7 +1,5 @@
-use crate::quay_config_reader::organization_struct::organization_struct::{Actions, QuayFnArguments};
-
-use super::organization_struct::organization_struct::{OrganizationYaml, QuayResponse};
-
+use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments};
+use super::organization_struct::{OrganizationYaml, QuayResponse};
 use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
@@ -12,11 +10,11 @@ use log::{debug, error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::io::{self, stdin, Write};
+use std::io::{self,Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::{fs::File, sync::Arc};
-use tokio::fs::{self, read_dir, write};
+use tokio::fs::{self, read_dir};
 
 #[derive(Debug)]
 pub struct QuayXmlConfig {
@@ -43,18 +41,17 @@ impl QuayXmlConfig {
 
         match serde_yaml::from_reader(quay_configs_file) {
             Ok(quay_login_configs) => {
-            return Ok(Self {
-                organization: vec![],
-                directory: directory.clone(),
-                governor,
-                log_level,
-                log_verbosity,
-                quay_login_configs
-                
-            });
-        }, 
-        Err(e) => return Err(Box::new(e)),
-    }
+                return Ok(Self {
+                    organization: vec![],
+                    directory: directory.clone(),
+                    governor,
+                    log_level,
+                    log_verbosity,
+                    quay_login_configs,
+                });
+            }
+            Err(e) => return Err(Box::new(e)),
+        }
     }
 
     pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
@@ -71,9 +68,6 @@ impl QuayXmlConfig {
                     self.organization.push(scrape_config);
 
                     //Check if replicated
-                    
-
-
                 }
                 Err(e) => {
                     error!("{:?}", e)
@@ -81,7 +75,7 @@ impl QuayXmlConfig {
             }
         }
 
-       // let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
+        // let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
 
         let tmp_organization = self.organization.clone();
 
@@ -89,15 +83,14 @@ impl QuayXmlConfig {
             match &org.replicate_to {
                 Some(replicated_to) => {
                     for endpoint in replicated_to {
-                       let mut new_org= org.clone();
-                       new_org.change_endpoint(endpoint.to_string());
-                       if (!self.organization.contains(&new_org)) {
-                           self.organization.push(new_org);
-                       } else {
-                        let str_error=format!("Endpoint replication '{}' already present as a main Quay organization '{}' with endpoint '{}'. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
-                        warn!("{}", str_error);
-                       }
-                       
+                        let mut new_org = org.clone();
+                        new_org.change_endpoint(endpoint.to_string());
+                        if !self.organization.contains(&new_org) {
+                            self.organization.push(new_org);
+                        } else {
+                            let str_error=format!("Endpoint replication '{}' already present as a main Quay organization '{}' with endpoint '{}'. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
+                            warn!("{}", str_error);
+                        }
                     }
                 }
                 None => {}
@@ -111,7 +104,7 @@ impl QuayXmlConfig {
         let mut files = read_dir(self.directory.to_owned()).await?;
         while let Some(f) = files.next_entry().await? {
             let f2 = File::open(f.path())?;
-           
+
             let result: Result<OrganizationYaml, serde_yaml::Error> = serde_yaml::from_reader(f2);
             match result {
                 Ok(_) => {
@@ -130,7 +123,7 @@ impl QuayXmlConfig {
 
         for org in self.organization {
             quay_endpoints.push(org.quay_endpoint.clone());
-            
+
             match org.replicate_to {
                 Some(replicated_to) => {
                     quay_endpoints.extend(replicated_to);
@@ -187,8 +180,6 @@ impl QuayXmlConfig {
     }
 
     pub fn get_organizations(&self) -> &Vec<OrganizationYaml> {
-
-        
         &self.organization
     }
 
@@ -225,23 +216,21 @@ impl QuayXmlConfig {
         let mut handles_delete_organization = Vec::new();
         let orgs = self.get_organizations();
 
-        
-
         for org in orgs {
             info!("Processing organization: {}", org.quay_organization);
 
             let token: String;
 
-            if let Some(t) = self.quay_login_configs.get_token_from_quay_endopoint(org.get_quay_endpoint()) {
-
+            if let Some(t) = self
+                .quay_login_configs
+                .get_token_from_quay_endopoint(org.get_quay_endpoint())
+            {
                 token = t
             } else {
                 let err_str = format!("No token found for {} Quay endpoint. Please run 'qcli login. Ignoring this Quay organization.",org.get_quay_endpoint());
-                error!("{}",err_str);
+                error!("{}", err_str);
                 continue;
-
             }
-
 
             let quay_fn_arguments = QuayFnArguments {
                 token,
@@ -250,8 +239,7 @@ impl QuayXmlConfig {
                 log_verbosity: self.log_verbosity,
             };
 
-            handles_delete_organization
-                .push(org.delete_organization(quay_fn_arguments));
+            handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
         }
         let results = join_all(handles_delete_organization);
 
@@ -261,9 +249,6 @@ impl QuayXmlConfig {
 
         Ok(())
     }
-
-   
-    
 
     pub async fn create_all(&self) -> Result<(), Box<dyn Error>> {
         let mut handles_all_organizations = Vec::new();
@@ -276,9 +261,8 @@ impl QuayXmlConfig {
         let mut handles_all_extra_user_permissions = Vec::new();
         let mut handles_all_extra_team_permissions = Vec::new();
         let mut handles_all_mirror_configurations = Vec::new();
-        
+
         let orgs = self.get_organizations();
-          
 
         for org in orgs {
             info!(
@@ -286,19 +270,18 @@ impl QuayXmlConfig {
                 org.quay_organization
             );
 
-
             let token: String;
 
-            if let Some(t) = self.quay_login_configs.get_token_from_quay_endopoint(org.get_quay_endpoint()) {
-
+            if let Some(t) = self
+                .quay_login_configs
+                .get_token_from_quay_endopoint(org.get_quay_endpoint())
+            {
                 token = t
             } else {
                 let err_str = format!("No token found for {} Quay endpoint. Please run 'qcli login. Ignoring this Quay organization.",org.get_quay_endpoint());
-                error!("{}",err_str);
+                error!("{}", err_str);
                 continue;
-
             }
-
 
             let quay_fn_arguments = QuayFnArguments {
                 token,
@@ -307,26 +290,19 @@ impl QuayXmlConfig {
                 log_verbosity: self.log_verbosity,
             };
 
-            handles_all_organizations
-                .push(org.create_organization(quay_fn_arguments.clone()));
+            handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));
 
             for robot in &org.robots {
-                handles_all_robots.push(org.create_robot(
-                    robot,
-                    quay_fn_arguments.clone()
-                ));
+                handles_all_robots.push(org.create_robot(robot, quay_fn_arguments.clone()));
             }
             for team in &org.teams {
-                handles_all_teams.push(org.create_team(
-                    team,
-                    quay_fn_arguments.clone()
-                ));
+                handles_all_teams.push(org.create_team(team, quay_fn_arguments.clone()));
 
                 for member in &team.members.users {
                     handles_all_team_members.push(org.add_user_to_team(
                         &team.name,
                         &member,
-                        quay_fn_arguments.clone()
+                        quay_fn_arguments.clone(),
                     ))
                 }
 
@@ -334,30 +310,23 @@ impl QuayXmlConfig {
                     handles_all_team_members.push(org.add_robot_to_team(
                         &team.name,
                         &member,
-                        quay_fn_arguments.clone()
+                        quay_fn_arguments.clone(),
                     ))
                 }
             }
 
             for repository in &org.repositories {
-                handles_all_repositories.push(org.create_repository(
-                    repository,
-                    quay_fn_arguments.clone()
-                ));
-                handles_all_extra_user_permissions.push(org.get_user_permission_from_repository(
-                    &repository,
-                    quay_fn_arguments.clone()
-                ));
-                handles_all_extra_team_permissions.push(org.get_team_permission_from_repository(
-                    &repository,
-                    quay_fn_arguments.clone()
-                ));
+                handles_all_repositories
+                    .push(org.create_repository(repository, quay_fn_arguments.clone()));
+                handles_all_extra_user_permissions.push(
+                    org.get_user_permission_from_repository(&repository, quay_fn_arguments.clone()),
+                );
+                handles_all_extra_team_permissions.push(
+                    org.get_team_permission_from_repository(&repository, quay_fn_arguments.clone()),
+                );
 
-                handles_all_mirror_configurations.push(org.create_repository_mirror(
-                    &repository,
-                  
-                    quay_fn_arguments.clone()
-                ));
+                handles_all_mirror_configurations
+                    .push(org.create_repository_mirror(&repository, quay_fn_arguments.clone()));
 
                 if let Some(permissions) = &repository.permissions {
                     for robot in &permissions.robots {
@@ -365,7 +334,7 @@ impl QuayXmlConfig {
                             org.grant_robot_permission_to_repository(
                                 &repository.name,
                                 &robot,
-                                quay_fn_arguments.clone()
+                                quay_fn_arguments.clone(),
                             ),
                         )
                     }
@@ -376,7 +345,7 @@ impl QuayXmlConfig {
                                 org.grant_team_permission_to_repository(
                                     &repository.name,
                                     &t,
-                                    quay_fn_arguments.clone()
+                                    quay_fn_arguments.clone(),
                                 ),
                             )
                         }
@@ -386,7 +355,7 @@ impl QuayXmlConfig {
                             org.grant_user_permission_to_repository(
                                 &repository.name,
                                 &user,
-                                quay_fn_arguments.clone()
+                                quay_fn_arguments.clone(),
                             ),
                         )
                     }
@@ -513,29 +482,23 @@ struct QuayLoginConfigs {
     pub quay_endpoint_login: Vec<QuayEndopoint>,
 }
 
-
-
 impl QuayLoginConfigs {
-
     fn get_quay_login_configs(&self) -> Vec<QuayEndopoint> {
         self.quay_endpoint_login.clone()
     }
 
-    pub fn get_token_from_quay_endopoint(&self,endpoint: String) -> Option<String> {
-
+    pub fn get_token_from_quay_endopoint(&self, endpoint: String) -> Option<String> {
         for configured_endpoint in self.get_quay_login_configs() {
-
             if configured_endpoint.quay_endpoint == endpoint {
-                return Some(configured_endpoint.quay_token)
+                return Some(configured_endpoint.quay_token);
             }
-
         }
 
         None
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Default,Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct QuayEndopoint {
     pub quay_endpoint: String,
     pub quay_token: String,

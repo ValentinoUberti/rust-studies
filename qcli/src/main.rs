@@ -1,5 +1,5 @@
 #![deny(elided_lifetimes_in_paths)]
-mod quay_config_reader;
+mod quay_configurator;
 use clap::{Args, Parser, Subcommand};
 use core::panic;
 use env_logger::{fmt::Color, Env, Target};
@@ -7,10 +7,9 @@ use std::error::Error;
 //use console_subscriber;
 use env_logger;
 use std::io::Write;
-
 use log::{info, Level};
+use crate::quay_configurator::quay_config_reader::QuayXmlConfig;
 
-use crate::quay_config_reader::quay_config_reader::QuayXmlConfig;
 
 #[derive(Parser)]
 #[command(author, version, about="Quay batch processing cli written in Rust", long_about = None)]
@@ -60,6 +59,9 @@ struct Delete {}
 #[derive(Args)]
 struct Check {}
 
+
+
+/// qr async main
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();

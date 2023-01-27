@@ -1,4 +1,4 @@
-pub mod organization_struct {
+
     use async_trait::async_trait;
     use chrono::{DateTime, Utc};
     use governor::clock::{QuantaClock, QuantaInstant};
@@ -1087,6 +1087,9 @@ pub mod organization_struct {
         role: String,
     }
 
+    /// Repository's member structs.
+    /// In the Quay context, a 'member' could be a user or a robot.
+    /// 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
     pub struct Members {
         #[serde(rename = "users")]
@@ -1096,13 +1099,18 @@ pub mod organization_struct {
         pub robots: Vec<String>,
     }
 
+   /// Helper struct to pass arguments to functions.
+   /// Useful for easily extend accepted function arguments.
     #[derive(Debug, Clone)]
     pub struct QuayFnArguments {
+        /// Quay token
         pub(crate) token: String,
+        /// Rate limiter
         pub governor:
             Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>>,
-
+        /// Log level
         pub log_level: log::Level,
+        /// Log verbosity
         pub log_verbosity: u8,
     }
-}
+
