@@ -864,8 +864,7 @@ pub mod organization_struct {
         #[serde(rename = "replicate_to")]
         pub replicate_to: Option<Vec<String>>,
 
-        // #[serde(rename = "quay_oauth_token")]
-        // quay_oauth_token: String,
+      
         #[serde(rename = "quay_validate_certs")]
         quay_validate_certs: String,
 

@@ -1,11 +1,7 @@
 ---
 # Generic variables
 quay_endpoint: "example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb"
-# Note:
-#   OAuth tokens should be defined for each organization with proper privileges.
-#   When a single global OAuth token with superuser privileges is used,
-#   the following variable can be defined in a dedicated vars file.
-quay_oauth_token: "8P6fjleOVjXhtBnU3oEHlK6MclwPdGyfmbj3NZof"
+
 
 # Enable/Disable TLS certificates validation
 quay_validate_certs: "yes"
