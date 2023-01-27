@@ -98,7 +98,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     let mut config: QuayXmlConfig;
-    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level) {
+    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,1) {
         Ok(c) => {
             config = c;
             info!("Basic config successfully loaded")

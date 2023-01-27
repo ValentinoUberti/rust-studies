@@ -1,4 +1,4 @@
-use crate::quay_config_reader::organization_struct::organization_struct::Actions;
+use crate::quay_config_reader::organization_struct::organization_struct::{Actions, QuayFnArguments};
 
 use super::organization_struct::organization_struct::{OrganizationYaml, QuayResponse};
 
@@ -24,6 +24,7 @@ pub struct QuayXmlConfig {
     directory: String,
     governor: Arc<RateLimiter<NotKeyed, InMemoryState, QuantaClock, NoOpMiddleware<QuantaInstant>>>,
     log_level: log::Level,
+    log_verbosity: u8,
     quay_login_configs: QuayLoginConfigs,
 }
 
@@ -32,6 +33,7 @@ impl QuayXmlConfig {
         directory: &String,
         req_per_seconds: u32,
         log_level: log::Level,
+        log_verbosity: u8,
     ) -> Result<Self, Box<dyn Error>> {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
@@ -46,6 +48,7 @@ impl QuayXmlConfig {
                 directory: directory.clone(),
                 governor,
                 log_level,
+                log_verbosity,
                 quay_login_configs
                 
             });
@@ -222,11 +225,33 @@ impl QuayXmlConfig {
         let mut handles_delete_organization = Vec::new();
         let orgs = self.get_organizations();
 
+        
+
         for org in orgs {
             info!("Processing organization: {}", org.quay_organization);
 
+            let token: String;
+
+            if let Some(t) = self.quay_login_configs.get_token_from_quay_endopoint(org.get_quay_endpoint()) {
+
+                token = t
+            } else {
+                let err_str = format!("No token found for {} Quay endpoint. Please run 'qcli login. Ignoring this Quay organization.",org.get_quay_endpoint());
+                error!("{}",err_str);
+                continue;
+
+            }
+
+
+            let quay_fn_arguments = QuayFnArguments {
+                token,
+                governor: self.get_cloned_governor(),
+                log_level: self.log_level,
+                log_verbosity: self.log_verbosity,
+            };
+
             handles_delete_organization
-                .push(org.delete_organization(self.get_cloned_governor(), self.log_level));
+                .push(org.delete_organization(quay_fn_arguments));
         }
         let results = join_all(handles_delete_organization);
 
@@ -252,7 +277,7 @@ impl QuayXmlConfig {
         let mut handles_all_extra_team_permissions = Vec::new();
         let mut handles_all_mirror_configurations = Vec::new();
         
-        let mut orgs = self.get_organizations();
+        let orgs = self.get_organizations();
           
 
         for org in orgs {
@@ -261,29 +286,47 @@ impl QuayXmlConfig {
                 org.quay_organization
             );
 
+
+            let token: String;
+
+            if let Some(t) = self.quay_login_configs.get_token_from_quay_endopoint(org.get_quay_endpoint()) {
+
+                token = t
+            } else {
+                let err_str = format!("No token found for {} Quay endpoint. Please run 'qcli login. Ignoring this Quay organization.",org.get_quay_endpoint());
+                error!("{}",err_str);
+                continue;
+
+            }
+
+
+            let quay_fn_arguments = QuayFnArguments {
+                token,
+                governor: self.get_cloned_governor(),
+                log_level: self.log_level,
+                log_verbosity: self.log_verbosity,
+            };
+
             handles_all_organizations
-                .push(org.create_organization(self.get_cloned_governor(), self.log_level));
+                .push(org.create_organization(quay_fn_arguments.clone()));
 
             for robot in &org.robots {
                 handles_all_robots.push(org.create_robot(
                     robot,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                    quay_fn_arguments.clone()
                 ));
             }
             for team in &org.teams {
                 handles_all_teams.push(org.create_team(
                     team,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                    quay_fn_arguments.clone()
                 ));
 
                 for member in &team.members.users {
                     handles_all_team_members.push(org.add_user_to_team(
                         &team.name,
                         &member,
-                        self.get_cloned_governor(),
-                        self.log_level,
+                        quay_fn_arguments.clone()
                     ))
                 }
 
@@ -291,8 +334,7 @@ impl QuayXmlConfig {
                     handles_all_team_members.push(org.add_robot_to_team(
                         &team.name,
                         &member,
-                        self.get_cloned_governor(),
-                        self.log_level,
+                        quay_fn_arguments.clone()
                     ))
                 }
             }
@@ -300,24 +342,21 @@ impl QuayXmlConfig {
             for repository in &org.repositories {
                 handles_all_repositories.push(org.create_repository(
                     repository,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                    quay_fn_arguments.clone()
                 ));
                 handles_all_extra_user_permissions.push(org.get_user_permission_from_repository(
                     &repository,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                    quay_fn_arguments.clone()
                 ));
                 handles_all_extra_team_permissions.push(org.get_team_permission_from_repository(
                     &repository,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                    quay_fn_arguments.clone()
                 ));
 
                 handles_all_mirror_configurations.push(org.create_repository_mirror(
                     &repository,
-                    self.get_cloned_governor(),
-                    self.log_level,
+                  
+                    quay_fn_arguments.clone()
                 ));
 
                 if let Some(permissions) = &repository.permissions {
@@ -326,8 +365,7 @@ impl QuayXmlConfig {
                             org.grant_robot_permission_to_repository(
                                 &repository.name,
                                 &robot,
-                                self.get_cloned_governor(),
-                                self.log_level,
+                                quay_fn_arguments.clone()
                             ),
                         )
                     }
@@ -338,8 +376,7 @@ impl QuayXmlConfig {
                                 org.grant_team_permission_to_repository(
                                     &repository.name,
                                     &t,
-                                    self.get_cloned_governor(),
-                                    self.log_level,
+                                    quay_fn_arguments.clone()
                                 ),
                             )
                         }
@@ -349,8 +386,7 @@ impl QuayXmlConfig {
                             org.grant_user_permission_to_repository(
                                 &repository.name,
                                 &user,
-                                self.get_cloned_governor(),
-                                self.log_level,
+                                quay_fn_arguments.clone()
                             ),
                         )
                     }
@@ -472,13 +508,35 @@ impl QuayXmlConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct QuayLoginConfigs {
     pub quay_endpoint_login: Vec<QuayEndopoint>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+
+
+impl QuayLoginConfigs {
+
+    fn get_quay_login_configs(&self) -> Vec<QuayEndopoint> {
+        self.quay_endpoint_login.clone()
+    }
+
+    pub fn get_token_from_quay_endopoint(&self,endpoint: String) -> Option<String> {
+
+        for configured_endpoint in self.get_quay_login_configs() {
+
+            if configured_endpoint.quay_endpoint == endpoint {
+                return Some(configured_endpoint.quay_token)
+            }
+
+        }
+
+        None
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default,Clone)]
 struct QuayEndopoint {
-    quay_endpoint: String,
-    quay_token: String,
+    pub quay_endpoint: String,
+    pub quay_token: String,
 }
