@@ -31,8 +31,16 @@ struct Cli {
     dir: String,
 
     #[arg(short, long)]
-    /// Accepted log level: info, debug
+    /// Log level. Accepted log level: info, debug. Default to info.
     log_level: Option<log::Level>,
+
+    #[arg(short, long)]
+    /// Log verbosity. Accepted values: 0,5,10. Default to 0
+    verbosity: Option<u8>,
+
+    #[arg(short, long)]
+    /// Connection timeout in seconds. Default to 1
+    timeout: Option<u64>,
 }
 
 #[derive(Subcommand)]
@@ -70,11 +78,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let req_per_seconds = 300;
 
     let log_level: log::Level;
-
     match cli.log_level {
         Some(ll) => log_level = ll,
         None => log_level = log::Level::Info,
     }
+
+    let log_verbosity: u8;
+    match cli.verbosity {
+        Some(verbosity) => log_verbosity = verbosity,
+        None => log_verbosity = 0,
+    }
+
+    let timeout: u64;
+    match cli.timeout {
+        Some(to) => timeout = to,
+        None => timeout = 1,
+    }
+
+
+
     //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
     env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str()))
         .target(Target::Stdout)
@@ -100,7 +122,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     let mut config: QuayXmlConfig;
-    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,1) {
+    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout) {
         Ok(c) => {
             config = c;
             info!("Basic config successfully loaded")

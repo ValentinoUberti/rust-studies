@@ -118,7 +118,7 @@
         {
             let api = reqwest::Client::new()
                 .request(method, endpoint)
-                .timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(quay_fn_arguments.timeout))
                 .header("Content-Type", "application/json")
                 .header("accept", "application/json")
                 .header(
@@ -1112,5 +1112,7 @@
         pub log_level: log::Level,
         /// Log verbosity
         pub log_verbosity: u8,
+        /// Connection timeout in seconds
+        pub timeout: u64,
     }
 

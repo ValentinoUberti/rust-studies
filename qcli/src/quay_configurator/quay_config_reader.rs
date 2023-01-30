@@ -24,6 +24,7 @@ pub struct QuayXmlConfig {
     log_level: log::Level,
     log_verbosity: u8,
     quay_login_configs: QuayLoginConfigs,
+    timeout: u64,
 }
 
 impl QuayXmlConfig {
@@ -32,6 +33,7 @@ impl QuayXmlConfig {
         req_per_seconds: u32,
         log_level: log::Level,
         log_verbosity: u8,
+        timeout: u64,
     ) -> Result<Self, Box<dyn Error>> {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
@@ -47,6 +49,8 @@ impl QuayXmlConfig {
                     governor,
                     log_level,
                     log_verbosity,
+                    timeout,
+
                     quay_login_configs,
                 });
             }
@@ -237,6 +241,7 @@ impl QuayXmlConfig {
                 governor: self.get_cloned_governor(),
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
+                timeout: self.timeout
             };
 
             handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
@@ -288,6 +293,7 @@ impl QuayXmlConfig {
                 governor: self.get_cloned_governor(),
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
+                timeout: self.timeout
             };
 
             handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));
