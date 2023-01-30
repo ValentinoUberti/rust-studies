@@ -125,6 +125,8 @@ impl QuayXmlConfig {
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
         let mut quay_endpoints: Vec<String> = Vec::new();
 
+
+        println!("HERE");
         for org in self.organization {
             quay_endpoints.push(org.quay_endpoint.clone());
 
