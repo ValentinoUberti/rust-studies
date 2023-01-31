@@ -1,5 +1,5 @@
-use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments};
 use super::organization_struct::{OrganizationYaml, QuayResponse};
+use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments};
 use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
@@ -10,7 +10,7 @@ use log::{debug, error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::io::{self,Write};
+use std::io::{self, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::{fs::File, sync::Arc};
@@ -34,30 +34,49 @@ impl QuayXmlConfig {
         log_level: log::Level,
         log_verbosity: u8,
         timeout: u64,
+        ignore_login_config: bool,
     ) -> Result<Self, Box<dyn Error>> {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
         )));
 
-        let quay_configs_file = File::open(".qcli/login.yaml")?;
+      
 
-        match serde_yaml::from_reader(quay_configs_file) {
-            Ok(quay_login_configs) => {
-                return Ok(Self {
-                    organization: vec![],
-                    directory: directory.clone(),
-                    governor,
-                    log_level,
-                    log_verbosity,
-                    timeout,
+        if !ignore_login_config {
+            let quay_configs_file = File::open(".qcli/login.yaml")?;
+            match serde_yaml::from_reader(quay_configs_file) {
+                Ok(quay_login_configs) => {
+                    return Ok(Self {
+                        organization: vec![],
+                        directory: directory.clone(),
+                        governor,
+                        log_level,
+                        log_verbosity,
+                        timeout,
 
-                    quay_login_configs,
-                });
+                        quay_login_configs,
+                    });
+                }
+                Err(e) => return Err(Box::new(e)),
             }
-            Err(e) => return Err(Box::new(e)),
-        }
-    }
+        } else {
 
+            // Creating dummy configs
+            let quay_login_configs: QuayLoginConfigs = QuayLoginConfigs { quay_endpoint_login: vec![] };
+            return Ok(Self {
+                organization: vec![],
+                directory: directory.clone(),
+                governor,
+                log_level,
+                log_verbosity,
+                timeout,
+
+                quay_login_configs,
+            })
+            
+           
+        }
+    }  
     pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
 
@@ -92,7 +111,7 @@ impl QuayXmlConfig {
                         if !self.organization.contains(&new_org) {
                             self.organization.push(new_org);
                         } else {
-                            let str_error=format!("Endpoint replication '{}' already present as a main Quay organization '{}' with endpoint '{}'. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
+                            let str_error=format!("Endpoint replication '{}' already attached to the Quay organization '{}' with endpoint '{}'. Ignoring....",endpoint,new_org.quay_organization,new_org.quay_endpoint);
                             warn!("{}", str_error);
                         }
                     }
@@ -124,7 +143,6 @@ impl QuayXmlConfig {
 
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
         let mut quay_endpoints: Vec<String> = Vec::new();
-
 
         println!("HERE");
         for org in self.organization {
@@ -243,7 +261,7 @@ impl QuayXmlConfig {
                 governor: self.get_cloned_governor(),
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
-                timeout: self.timeout
+                timeout: self.timeout,
             };
 
             handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
@@ -295,7 +313,7 @@ impl QuayXmlConfig {
                 governor: self.get_cloned_governor(),
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
-                timeout: self.timeout
+                timeout: self.timeout,
             };
 
             handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));

@@ -7,7 +7,7 @@ use std::error::Error;
 //use console_subscriber;
 use env_logger;
 use std::io::Write;
-use log::{info, Level};
+use log::{info, Level, error};
 use crate::quay_configurator::quay_config_reader::QuayXmlConfig;
 
 
@@ -122,12 +122,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     let mut config: QuayXmlConfig;
-    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout) {
+    
+    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout, false) {
         Ok(c) => {
             config = c;
             info!("Basic config successfully loaded")
         }
-        Err(e) => panic!("{}", e.to_string()),
+        Err(_e) => {
+            error!("Login config file not found or corrupted. Run qcli login.");
+            match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout, true) {
+                Ok(c) => {
+                    config = c;
+                    info!("Dummy login config successfully loaded")
+                }
+                Err(e) => {
+                    error!("Login config file not found or corrupted. Stopping execution.");
+                    panic!("{}",e.to_string());
+                },
+            }
+        },
     }
 
     match &cli.command {
