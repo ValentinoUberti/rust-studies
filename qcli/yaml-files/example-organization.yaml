@@ -2,9 +2,9 @@
 # Generic variables
 quay_endpoint: "example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb"
 
-replicate_to:
-  - 111111example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb1
-  - example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb
+#replicate_to:
+#  - 111111example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb1
+#  - example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb
   
 # Enable/Disable TLS certificates validation
 quay_validate_certs: "yes"
