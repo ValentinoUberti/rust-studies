@@ -39,7 +39,7 @@ struct Cli {
     verbosity: Option<u8>,
 
     #[arg(short, long)]
-    /// Connection timeout in seconds. Default to 1
+    /// Connection timeout in seconds. Default to 5
     timeout: Option<u64>,
 }
 
@@ -92,7 +92,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let timeout: u64;
     match cli.timeout {
         Some(to) => timeout = to,
-        None => timeout = 1,
+        None => timeout = 5,
     }
 
 

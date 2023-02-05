@@ -40,8 +40,6 @@ impl QuayXmlConfig {
             NonZeroU32::new(req_per_seconds).unwrap(),
         )));
 
-      
-
         if !ignore_login_config {
             let quay_configs_file = File::open(".qcli/login.yaml")?;
             match serde_yaml::from_reader(quay_configs_file) {
@@ -60,9 +58,10 @@ impl QuayXmlConfig {
                 Err(e) => return Err(Box::new(e)),
             }
         } else {
-
             // Creating dummy configs
-            let quay_login_configs: QuayLoginConfigs = QuayLoginConfigs { quay_endpoint_login: vec![] };
+            let quay_login_configs: QuayLoginConfigs = QuayLoginConfigs {
+                quay_endpoint_login: vec![],
+            };
             return Ok(Self {
                 organization: vec![],
                 directory: directory.clone(),
@@ -72,25 +71,19 @@ impl QuayXmlConfig {
                 timeout,
 
                 quay_login_configs,
-            })
-            
-           
+            });
         }
-    }  
+    }
     pub async fn load_config(&mut self) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
 
         while let Some(f) = files.next_entry().await? {
             info!("Loading config from  {:?} ", f.file_name());
             let f = File::open(f.path())?;
-            //let scrape_config: OrganizationYaml =
-            //    serde_yaml::from_reader(f)
 
             match serde_yaml::from_reader(f) {
                 Ok(scrape_config) => {
                     self.organization.push(scrape_config);
-
-                    //Check if replicated
                 }
                 Err(e) => {
                     error!("{:?}", e)
@@ -98,7 +91,9 @@ impl QuayXmlConfig {
             }
         }
 
-        // let mut org_to_add: Vec<OrganizationYaml> = Vec::new();
+        //Adds optional endpoints (replicated_to -> endpoints)
+        // Warn if the replicated endpoints already exists as a main Quay endpoint.
+        // Only unique endpoints are considered
 
         let tmp_organization = self.organization.clone();
 
@@ -123,6 +118,11 @@ impl QuayXmlConfig {
         Ok(())
     }
 
+    pub async fn write_log(log_verbosity: u8, message: &str) {
+        if log_verbosity >= 5 {
+            info!("{}", message);
+        }
+    }
     pub async fn check_config(&self) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
         while let Some(f) = files.next_entry().await? {
@@ -158,7 +158,8 @@ impl QuayXmlConfig {
 
         quay_endpoints = quay_endpoints.unique();
 
-        info!("Found {} unique Quay endpoint(s)", quay_endpoints.len());
+        let msg = &format!("Found {} unique Quay endpoint(s)", quay_endpoints.len());
+        Self::write_log(self.log_verbosity, &msg).await;
 
         // Checking if .qcli directory exists and creating it if does not.
 
@@ -166,11 +167,16 @@ impl QuayXmlConfig {
         let login_file = "login.yaml";
 
         if !Path::new(login_directory).is_dir() {
-            info!(".qcli directory does not exists. Creating...");
+            let msg = &format!(".qcli directory does not exists. Creating...");
+            Self::write_log(self.log_verbosity, &msg).await;
+
             fs::create_dir(login_directory).await?;
-            info!(".qcli directory created.");
+
+            let msg = &format!(".qcli directory created.");
+            Self::write_log(self.log_verbosity, &msg).await;
         } else {
-            info!(".qcli directory exists.")
+            let msg = &format!(".qcli directory exists.");
+            Self::write_log(self.log_verbosity, &msg).await;
         }
 
         if !std::path::Path::new(login_file).exists() {
@@ -214,25 +220,27 @@ impl QuayXmlConfig {
     }
 
     fn print_result(&self, _description: String, result: Result<QuayResponse, Box<dyn Error>>) {
-        match result {
-            Ok(r) => {
-                let mut corrected_description = String::new();
+        if self.log_verbosity >= 5 {
+            match result {
+                Ok(r) => {
+                    let mut corrected_description = String::new();
 
-                if r.status_code == StatusCode::NO_CONTENT {
-                    // 204 from success delete organization
-                    corrected_description.insert_str(0, "No Content success");
-                } else {
-                    corrected_description.insert_str(0, r.description.as_str());
+                    if r.status_code == StatusCode::NO_CONTENT {
+                        // 204 from success delete organization
+                        corrected_description.insert_str(0, "No Content success");
+                    } else {
+                        corrected_description.insert_str(0, r.description.as_str());
+                    }
+
+                    info!("{:?}", r);
+
+                    //println!("------------------------");
+                    //println!("{} {}", description, corrected_description);
+                    //println!("Status code: {}", r.status_code);
+                    //println!("Message: {}", r.response);
                 }
-
-                info!("{:?}", r);
-
-                //println!("------------------------");
-                //println!("{} {}", description, corrected_description);
-                //println!("Status code: {}", r.status_code);
-                //println!("Message: {}", r.response);
+                Err(e) => error!("Error: {}", e),
             }
-            Err(e) => error!("Error: {}", e),
         }
     }
 
