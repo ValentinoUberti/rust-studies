@@ -741,11 +741,15 @@
                         no_proxy: params.no_proxy.clone(),
                     };
 
+                    println!("{:?}",params);
+
                     let external_registry_config = ExternalRegistryConfig {
                         verify_tls: params.ext_registry_verify_tls,
                         unsigned_images: params.ext_registry_unsigned_image.unwrap_or_default(),
                         proxy: proxy_configuration,
                     };
+
+                    println!("{:?}",external_registry_config);
 
                     let root_rule = RootRule {
                         rule_kind: "tag_glob_csv".to_string(),
