@@ -94,7 +94,7 @@ impl QuayXmlConfig {
             }
         }
 
-        //Adds optional endpoints (replicated_to -> endpoints)
+        // Adds optional endpoints (replicated_to -> endpoints)
         // Warn if the replicated endpoints already exists as a main Quay endpoint.
         // Only unique endpoints are considered
 
@@ -146,6 +146,7 @@ impl QuayXmlConfig {
 
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
         let mut quay_endpoints: Vec<String> = Vec::new();
+        let mut quay_mirror_login = quay_mirror_login::default();
 
         //println!("HERE");
         for org in self.organization {
@@ -157,7 +158,34 @@ impl QuayXmlConfig {
                 }
                 None => {}
             }
+
+            // Extract repositories mirror login informations
+            for repo in org.repositories {
+                match repo.mirror_params {
+                    Some(mirror_params) => {
+                        match mirror_params.ext_registry_username {
+                            Some(username) => {
+                                let mirror_login = mirror_login {
+                                    organization: org.quay_organization.clone(),
+                                    repository: repo.name,
+                                    ext_registry_username: username,
+                                    ext_registry_password: "".to_string(),
+                                };
+                                quay_mirror_login.mirror_repository.push(mirror_login);
+
+                            },
+                            None => {},
+                        }
+                    }
+
+                    
+                    None => {}
+                }
+            }
         }
+
+
+        println!("{:?}",quay_mirror_login);
 
         quay_endpoints = quay_endpoints.unique();
 
@@ -583,6 +611,9 @@ impl QuayXmlConfig {
     }
 }
 
+
+
+// Configuration struct contaning oauth token for each Quay endpoints
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct QuayLoginConfigs {
     pub quay_endpoint_login: Vec<QuayEndopoint>,
@@ -609,3 +640,46 @@ struct QuayEndopoint {
     pub quay_endpoint: String,
     pub quay_token: String,
 }
+
+
+// Configuration struct for saving mirroring password for each repositories (if mirror username exists)
+// ``` 
+// repositories:
+//  - name: alpine
+//  visibility: "public"
+//  description: "mirror of **quay.io/libpod/alpine**, mirrored tags: latest, v1"
+//  mirror: true
+//  mirror_params:
+//      src_registry: quay.io
+//      src_image: libpod/alpine
+//      src_image_tags:
+//        - "latest"
+//        - "v1"
+//      ext_registry_username: "valeidm"
+// ```
+// if "ext_registry_username" a relative password is saved in .qcli/login.yaml
+//
+// login.yaml
+//
+// quay_mirror_login:
+//   - organization: <quay-organization>
+//     repository: <quay-repository>
+//     ext_registry_username: <ext_registry_username> 
+//     ext_registry_password: 
+//
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct quay_mirror_login {
+    pub mirror_repository: Vec<mirror_login>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct mirror_login {
+    pub organization: String,
+    pub repository: String,
+    pub ext_registry_username: String,
+    pub ext_registry_password: String,
+}
+
+
+

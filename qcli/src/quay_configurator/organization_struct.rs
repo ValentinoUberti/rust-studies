@@ -909,7 +909,7 @@
         mirror: bool,
 
         #[serde(rename = "mirror_params")]
-        mirror_params: Option<MirrorParams>,
+        pub mirror_params: Option<MirrorParams>,
 
         #[serde(rename = "permissions")]
         pub permissions: Option<Permissions>,
@@ -1027,7 +1027,7 @@
         no_proxy: Option<String>,
 
         #[serde(rename = "ext_registry_username")]
-        ext_registry_username: Option<String>,
+        pub ext_registry_username: Option<String>,
 
         #[serde(rename = "ext_registry_password")]
         ext_registry_password: Option<String>,

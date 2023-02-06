@@ -30,7 +30,7 @@ repositories:
           - "latest"
           - "v1"
         ext_registry_username: "valeidm"
-        ext_registry_password: "casafu11"
+        #ext_registry_username: ASKED DURING SETUP
         ext_registry_verify_tls: true
         ext_registry_unsigned_image: true
         robot_username: writer
