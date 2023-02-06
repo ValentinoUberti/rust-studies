@@ -25,6 +25,7 @@ pub struct QuayXmlConfig {
     log_verbosity: u8,
     quay_login_configs: QuayLoginConfigs,
     timeout: u64,
+    tls_verify: bool,
 }
 
 impl QuayXmlConfig {
@@ -35,6 +36,7 @@ impl QuayXmlConfig {
         log_verbosity: u8,
         timeout: u64,
         ignore_login_config: bool,
+        tls_verify: bool,
     ) -> Result<Self, Box<dyn Error>> {
         let governor = Arc::new(governor::RateLimiter::direct(governor::Quota::per_minute(
             NonZeroU32::new(req_per_seconds).unwrap(),
@@ -51,7 +53,7 @@ impl QuayXmlConfig {
                         log_level,
                         log_verbosity,
                         timeout,
-
+                        tls_verify,
                         quay_login_configs,
                     });
                 }
@@ -69,7 +71,7 @@ impl QuayXmlConfig {
                 log_level,
                 log_verbosity,
                 timeout,
-
+                tls_verify,
                 quay_login_configs,
             });
         }
@@ -220,26 +222,27 @@ impl QuayXmlConfig {
     }
 
     fn print_result(&self, _description: String, result: Result<QuayResponse, Box<dyn Error>>) {
-        if self.log_verbosity >= 5 {
-            match result {
-                Ok(r) => {
-                    let mut corrected_description = String::new();
+        match result {
+            Ok(r) => {
+                let mut corrected_description = String::new();
 
-                    if r.status_code == StatusCode::NO_CONTENT {
-                        // 204 from success delete organization
-                        corrected_description.insert_str(0, "No Content success");
-                    } else {
-                        corrected_description.insert_str(0, r.description.as_str());
-                    }
-
-                    info!("{:?}", r);
-
-                    //println!("------------------------");
-                    //println!("{} {}", description, corrected_description);
-                    //println!("Status code: {}", r.status_code);
-                    //println!("Message: {}", r.response);
+                if r.status_code == StatusCode::NO_CONTENT {
+                    // 204 from success delete organization
+                    corrected_description.insert_str(0, "No Content success");
+                } else {
+                    corrected_description.insert_str(0, r.description.as_str());
                 }
-                Err(e) => error!("Error: {}", e),
+                if self.log_verbosity >= 5 {
+                    info!("{:?}", r);
+                }
+                //println!("------------------------");
+                //println!("{} {}", description, corrected_description);
+                //println!("Status code: {}", r.status_code);
+                //println!("Message: {}", r.response);
+            }
+            Err(e) => {
+                error!("Error: {}", e);
+                panic!("{}",format!("Can not continue. Please check network connectivity"));
             }
         }
     }
@@ -270,6 +273,7 @@ impl QuayXmlConfig {
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
                 timeout: self.timeout,
+                tls_verify: self.tls_verify,
             };
 
             handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
@@ -322,6 +326,7 @@ impl QuayXmlConfig {
                 log_level: self.log_level,
                 log_verbosity: self.log_verbosity,
                 timeout: self.timeout,
+                tls_verify: self.tls_verify,
             };
 
             handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));

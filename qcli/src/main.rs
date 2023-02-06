@@ -1,15 +1,16 @@
 #![deny(elided_lifetimes_in_paths)]
 mod quay_configurator;
+use chrono::Utc;
 use clap::{Args, Parser, Subcommand};
 use core::panic;
 use env_logger::{fmt::Color, Env, Target};
 use std::error::Error;
+use tokio::time::Instant;
 //use console_subscriber;
-use env_logger;
-use std::io::Write;
-use log::{info, Level, error};
 use crate::quay_configurator::quay_config_reader::QuayXmlConfig;
-
+use env_logger;
+use log::{error, info, Level};
+use std::io::Write;
 
 #[derive(Parser)]
 #[command(author, version, about="Quay batch processing cli written in Rust", long_about = None)]
@@ -38,9 +39,13 @@ struct Cli {
     /// Log verbosity. Accepted values: 0,5,10. Default to 0
     verbosity: Option<u8>,
 
-    #[arg(short, long)]
+    #[arg(long)]
     /// Connection timeout in seconds. Default to 5
     timeout: Option<u64>,
+
+    #[arg(long)]
+    /// Verify Quay tls certificate. Default to true
+    tls_verify: Option<bool>,
 }
 
 #[derive(Subcommand)]
@@ -67,12 +72,14 @@ struct Delete {}
 #[derive(Args)]
 struct Check {}
 
-
-
 /// qr async main
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     //console_subscriber::init();
+
+    let time = Utc::now();
+
+    let now = Instant::now();
 
     let cli = Cli::parse();
     let req_per_seconds = 300;
@@ -95,7 +102,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         None => timeout = 5,
     }
 
-
+    let tls_verify: bool;
+    match cli.tls_verify {
+        Some(verify) => tls_verify = verify,
+        None => tls_verify = true,
+    }
 
     //env_logger::init_from_env(Env::default().default_filter_or(log_level.as_str()));
     env_logger::Builder::from_env(Env::default().default_filter_or(log_level.as_str()))
@@ -121,26 +132,44 @@ async fn main() -> Result<(), Box<dyn Error>> {
         })
         .init();
 
+    info!("UTC start time: {:?}", time.to_rfc3339());
+
     let mut config: QuayXmlConfig;
-    
-    match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout, false) {
+
+    match QuayXmlConfig::new(
+        &cli.dir,
+        req_per_seconds,
+        log_level,
+        log_verbosity,
+        timeout,
+        false,
+        tls_verify,
+    ) {
         Ok(c) => {
             config = c;
             info!("Basic config successfully loaded")
         }
         Err(_e) => {
             error!("Login config file not found or corrupted. Run qcli login.");
-            match QuayXmlConfig::new(&cli.dir, req_per_seconds, log_level,log_verbosity,timeout, true) {
+            match QuayXmlConfig::new(
+                &cli.dir,
+                req_per_seconds,
+                log_level,
+                log_verbosity,
+                timeout,
+                true,
+                tls_verify,
+            ) {
                 Ok(c) => {
                     config = c;
                     info!("Dummy login config successfully loaded")
                 }
                 Err(e) => {
                     error!("Login config file not found or corrupted. Stopping execution.");
-                    panic!("{}",e.to_string());
-                },
+                    panic!("{}", e.to_string());
+                }
             }
-        },
+        }
     }
 
     match &cli.command {
@@ -195,8 +224,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 &cli.dir
             );
             config.load_config().await?;
-
-            
         }
         SubCommands::Login(_) => {
             info!("Creating Quay login info from  {} directory...", &cli.dir);
@@ -205,5 +232,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             config.create_login().await?;
         }
     }
+
+    info!("Execution terminated.");
+    info!("Elapsed time in seconds: {}",now.elapsed().as_secs() );
+
     Ok(())
 }

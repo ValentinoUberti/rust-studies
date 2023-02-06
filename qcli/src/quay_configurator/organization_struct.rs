@@ -116,7 +116,9 @@
         where
             T: Serialize + std::marker::Sync,
         {
-            let api = reqwest::Client::new()
+            let client = reqwest::Client::builder().danger_accept_invalid_certs(quay_fn_arguments.tls_verify).build()?;
+
+            let api = client
                 .request(method, endpoint)
                 .timeout(Duration::from_secs(quay_fn_arguments.timeout))
                 .header("Content-Type", "application/json")
@@ -134,6 +136,7 @@
                 .until_ready_with_jitter(retry_jitter)
                 .await;
 
+            
             //println("{:?}",governor.)
             let response_status = api.send().await?;
             let status_code = response_status.status();
@@ -1114,5 +1117,7 @@
         pub log_verbosity: u8,
         /// Connection timeout in seconds
         pub timeout: u64,
+        /// Verify Quay tls 
+        pub tls_verify: bool
     }
 
