@@ -5,7 +5,7 @@
     use governor::middleware::NoOpMiddleware;
     use governor::state::{InMemoryState, NotKeyed};
     use governor::{self, RateLimiter};
-    use log::{debug, warn};
+    use log::{debug};
     use std::sync::Arc;
     use std::{collections::HashMap, error::Error, time::Duration};
     use substring::Substring;

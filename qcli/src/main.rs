@@ -234,7 +234,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     info!("Execution terminated.");
-    info!("Elapsed time in seconds: {}",now.elapsed().as_secs() );
+    info!("Total execution time in seconds: {}",now.elapsed().as_secs_f32() );
 
     Ok(())
 }

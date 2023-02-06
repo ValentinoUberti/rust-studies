@@ -6,9 +6,10 @@ use governor::clock::{QuantaClock, QuantaInstant};
 use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use tokio::time::Instant;
 use std::error::Error;
 use std::io::{self, Write};
 use std::num::NonZeroU32;
@@ -146,7 +147,7 @@ impl QuayXmlConfig {
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
         let mut quay_endpoints: Vec<String> = Vec::new();
 
-        println!("HERE");
+        //println!("HERE");
         for org in self.organization {
             quay_endpoints.push(org.quay_endpoint.clone());
 
@@ -278,11 +279,23 @@ impl QuayXmlConfig {
 
             handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
         }
+        let now = Instant::now();
+
+        info!(
+            "Deleting {} organization...",
+            handles_delete_organization.len()
+        );
         let results = join_all(handles_delete_organization);
 
         for result in results.await {
             self.print_result("Organization ->".to_string(), result);
         }
+
+        info!(
+            "Organizations deleted in {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
+
 
         Ok(())
     }
@@ -416,98 +429,152 @@ impl QuayXmlConfig {
 
         // Create organization
         info!(
-            "Creating {} organization cuncurrently",
+            "Creating {} organization...",
             handles_all_organizations.len()
         );
 
         let results = join_all(handles_all_organizations);
 
+        let now = Instant::now();
         for result in results.await {
             self.print_result("Organization ->".to_string(), result);
         }
 
-        // Create robots
-        info!("Creating {} robots cuncurrently", handles_all_robots.len());
+        info!(
+            "Organizations created in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
 
+        // Create robots
+        info!("Creating {} robots...", handles_all_robots.len());
+
+        let now = Instant::now();
         let results = join_all(handles_all_robots);
 
         for result in results.await {
             self.print_result("Robots ->".to_string(), result);
         }
 
+        info!(
+            "Robots created in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
         // Create teams
-        info!("Creating {} teams cuncurrently", handles_all_teams.len());
+        info!("Creating {} teams...", handles_all_teams.len());
+
+        let now = Instant::now();
+
         let results = join_all(handles_all_teams);
 
         for result in results.await {
             self.print_result("Teams ->".to_string(), result);
         }
 
+        info!(
+            "Teams created in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
+
         // Adding team members
         info!(
-            "Adding {} team members cuncurrently",
+            "Adding {} team members...",
             handles_all_team_members.len()
         );
+        let now = Instant::now();
         let results = join_all(handles_all_team_members);
 
         for result in results.await {
             self.print_result("Team members ->".to_string(), result);
         }
 
+        info!(
+            "Teams members added in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
         // Create repositories
         info!(
-            "Creating {} repositories cuncurrently",
+            "Creating {} repositories...",
             handles_all_repositories.len()
         );
 
+        let now = Instant::now();
         let results = join_all(handles_all_repositories);
 
         for result in results.await {
             self.print_result("Repository ->".to_string(), result);
         }
 
+        info!(
+            "Repositories created in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
         //  Get user currently repositories permission (IF ANY)
         info!(
-            "Delete extra user and robot permission from {} repository cuncurrently",
+            "Delete extra user and robot permission from {} repository...",
             handles_all_extra_user_permissions.len()
         );
+        let now = Instant::now();
         let results = join_all(handles_all_extra_user_permissions);
 
         for result in results.await {
             self.print_result("Repository USER permissions ->".to_string(), result);
         }
 
+        info!(
+            "Extra users and robots permissions deleted in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
         // Get currently team repositories permission (IF ANY)
         info!(
-            "Delete extra team permission from {} repository cuncurrently",
+            "Delete extra team permission from {} repository...",
             handles_all_extra_team_permissions.len()
         );
+        let now = Instant::now();
         let results = join_all(handles_all_extra_team_permissions);
 
         for result in results.await {
             self.print_result("Repository TEAM permissions ->".to_string(), result);
         }
+
+        info!(
+            "Extra teams permissions deleted in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
+
         // Create repositories permission
         info!(
-            "Creating {} repositories permissions cuncurrently",
+            "Creating {} repositories permissions...",
             handles_all_repositories_permissions.len()
         );
+
+        let now = Instant::now();
         let results = join_all(handles_all_repositories_permissions);
 
         for result in results.await {
             self.print_result("Repository permissions ->".to_string(), result);
         }
 
+        info!(
+            "Repositories permissions created in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
+
         // Configure repository mirror
         info!(
-            "Configuring {} repositories mirror concurrently",
+            "Configuring {} repositories mirror...",
             handles_all_mirror_configurations.len()
         );
+
+        let now = Instant::now();
         let results = join_all(handles_all_mirror_configurations);
 
         for result in results.await {
-            self.print_result("Repository permissions ->".to_string(), result);
+            self.print_result("Repository mirror ->".to_string(), result);
         }
+        info!(
+            "Repositories mirror configured in  {} seconds.",
+            now.elapsed().as_secs_f32()
+        );
 
         Ok(())
         /*
