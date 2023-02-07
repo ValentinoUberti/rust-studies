@@ -1,7 +1,5 @@
 use super::organization_struct::{OrganizationYaml, QuayResponse};
-use crate::quay_configurator::organization_struct::{
-    Actions, QuayFnArguments, QuayFnArgumentsMirrorLogin,
-};
+use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments};
 use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
@@ -130,7 +128,7 @@ impl QuayXmlConfig {
             info!("{}", message);
         }
     }
-    pub async fn check_config(&self) -> Result<(), std::io::Error> {
+    pub async fn check_config(&self, halt_on_error: bool) -> Result<(), std::io::Error> {
         let mut files = read_dir(self.directory.to_owned()).await?;
         while let Some(f) = files.next_entry().await? {
             let f2 = File::open(f.path())?;
@@ -210,6 +208,8 @@ impl QuayXmlConfig {
                     let msg = &format!("Found {} unique Quay endpoint(s)", quay_endpoints.len());
                     Self::write_log(self.log_verbosity, &msg).await;
 
+                    // Exit if halt_on_error==true.
+
                     // Calculating vector difference
                     // if present_quay_mirror_login and quay_mirror_login Vector are different, there is no password in login.yaml for required repo.
                     // It's a O(N*M) operation, ok for small vectors
@@ -225,14 +225,14 @@ impl QuayXmlConfig {
                         .cloned()
                         .collect();
 
-                    let difference: HashSet<MirrorLogin> =
-                        (&s2 - &s1).iter().cloned().collect();
-
-                    
+                    let difference: HashSet<MirrorLogin> = (&s2 - &s1).iter().cloned().collect();
 
                     if difference.len() > 0 {
                         let msg = &format!("Missing mirror user password: {:?}. Check .qcli/login.yaml or run login subcommand.", difference);
                         error!("{}", msg);
+                        if halt_on_error {
+                            std::process::exit(1);
+                        }
                     } else {
                         let msg = &format!("Missing mirror user password: {:?}", difference);
                         Self::write_log(self.log_verbosity, &msg).await;

@@ -179,7 +179,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 &cli.dir
             );
 
-            config.check_config().await?;
+            config.check_config(true).await?;
 
             info!(
                 "Loading quay configurations file from {} directory...",
@@ -198,7 +198,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 &cli.dir
             );
 
-            config.check_config().await?;
+            config.check_config(false).await?;
 
             info!(
                 "Loading quay configurations file from {} directory...",
@@ -217,7 +217,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 &cli.dir
             );
 
-            config.check_config().await?;
+            config.check_config(true).await?;
 
             info!(
                 "Loading quay configurations file from {} directory...",
@@ -227,7 +227,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         SubCommands::Login(_) => {
             info!("Creating Quay login info from {} directory...", &cli.dir);
-            config.check_config().await?;
+            config.check_config(false).await?;
             config.load_config().await?;
             config.create_login().await?;
         }

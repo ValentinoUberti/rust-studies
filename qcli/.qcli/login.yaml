@@ -5,5 +5,5 @@ quay_endpoint_login:
 mirror_repository:
   - organization: exampleorg
     repository: alpine
-    ext_registry_username: valeidm2
+    ext_registry_username: valeidm
     ext_registry_password: casafu11
