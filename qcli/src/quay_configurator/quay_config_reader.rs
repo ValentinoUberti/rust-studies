@@ -146,7 +146,7 @@ impl QuayXmlConfig {
 
     pub async fn create_login(self) -> Result<(), Box<dyn Error>> {
         let mut quay_endpoints: Vec<String> = Vec::new();
-        let mut quay_mirror_login = quay_mirror_login::default();
+        let mut quay_mirror_login = QuayMirrorLogin::default();
 
         //println!("HERE");
         for org in self.organization {
@@ -165,7 +165,7 @@ impl QuayXmlConfig {
                     Some(mirror_params) => {
                         match mirror_params.ext_registry_username {
                             Some(username) => {
-                                let mirror_login = mirror_login {
+                                let mirror_login = MirrorLogin {
                                     organization: org.quay_organization.clone(),
                                     repository: repo.name,
                                     ext_registry_username: username,
@@ -181,7 +181,7 @@ impl QuayXmlConfig {
                     
                     None => {}
                 }
-            }
+            } // for 
         }
 
 
@@ -210,7 +210,9 @@ impl QuayXmlConfig {
             Self::write_log(self.log_verbosity, &msg).await;
         }
 
-        if !std::path::Path::new(login_file).exists() {
+
+        // To do - check path for windows
+        if !std::path::Path::new(&format!("{}/{}", login_directory, login_file)).exists() {
             warn!("{} does not exits. Creating...", login_file);
 
             let mut logins = QuayLoginConfigs::default();
@@ -229,12 +231,42 @@ impl QuayXmlConfig {
                 logins.quay_endpoint_login.push(endpoint);
             }
 
+            let mut tmp_quay_mirror_login = QuayMirrorLogin::default();
+
+            for mirror in quay_mirror_login.mirror_repository {
+                print!("Please insert password for user '{}', repository '{}' of organization '{}' :", mirror.ext_registry_username,mirror.repository,mirror.organization);
+                io::stdout().flush()?;
+                let mut token = String::new();
+                io::stdin().read_line(&mut token)?;
+
+                let single_mirror_login = MirrorLogin {
+                    organization: mirror.organization,
+                    repository: mirror.repository,
+                    ext_registry_username: mirror.ext_registry_username,
+                    ext_registry_password: token.trim().to_string()
+                };
+                
+
+                tmp_quay_mirror_login.mirror_repository.push(single_mirror_login);
+            } // for
+
+
+
             let f = std::fs::OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(format!("{}/{}", login_directory, login_file))?;
 
             serde_yaml::to_writer(f, &logins)?;
+
+            let f = std::fs::OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(format!("{}/{}", login_directory, login_file))?;
+
+            serde_yaml::to_writer(f, &tmp_quay_mirror_login)?;
+
+            
         }
 
         Ok(())
@@ -669,12 +701,12 @@ struct QuayEndopoint {
 //
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
-pub struct quay_mirror_login {
-    pub mirror_repository: Vec<mirror_login>,
+pub struct QuayMirrorLogin {
+    pub mirror_repository: Vec<MirrorLogin>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
-pub struct mirror_login {
+pub struct MirrorLogin {
     pub organization: String,
     pub repository: String,
     pub ext_registry_username: String,
