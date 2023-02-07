@@ -14,6 +14,8 @@
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
+    use super::quay_config_reader::MirrorLogin;
+
     #[derive(Debug, Default, Clone)]
     pub struct QuayResponse {
         pub response: Value,
@@ -156,6 +158,8 @@
             }
             Ok(quay_response)
         }
+
+        
     }
 
     #[async_trait]
@@ -741,7 +745,7 @@
                         no_proxy: params.no_proxy.clone(),
                     };
 
-                    println!("{:?}",params);
+                    //println!("{:?}",params);
 
                     let external_registry_config = ExternalRegistryConfig {
                         verify_tls: params.ext_registry_verify_tls,
@@ -749,7 +753,7 @@
                         proxy: proxy_configuration,
                     };
 
-                    println!("{:?}",external_registry_config);
+                    //println!("{:?}",external_registry_config);
 
                     let root_rule = RootRule {
                         rule_kind: "tag_glob_csv".to_string(),
@@ -762,13 +766,37 @@
 
                     let formatted = format!("{}", now.format("%Y-%m-%dT%H:%M:%Sz"));
 
+                    let mut external_registry_password: Option<String> = None;
+                    // Get the appropriate repository mirror password
+
+                    match &quay_fn_arguments.mirror_login {
+
+                        Some(mirrors) => {
+
+                           for mirror in mirrors {
+                            if Some(mirror.ext_registry_username.clone()) == params.ext_registry_username.clone() {
+                                if mirror.repository == repo.name {
+                                    if mirror.organization == self.quay_organization {
+                                        external_registry_password = Some(mirror.ext_registry_password.clone());
+                                        println!("FOUND PASSWORD: {:?}",external_registry_password.clone());
+                                    }
+                                }
+                            }
+                           }
+
+                        }
+                        None => {}
+                        
+                    }
+
+
                     let body = MirrorConfig {
                         external_reference: format!(
                             "{}/{}",
                             params.src_registry,
                             params.src_image.clone()
                         ),
-                        external_registry_password: params.ext_registry_password.clone(),
+                        external_registry_password,
                         external_registry_username: params.ext_registry_username.clone(),
                         sync_interval: params.sync_interval,
                         sync_start_date: formatted,
@@ -1106,6 +1134,7 @@
         pub robots: Vec<String>,
     }
 
+    
    /// Helper struct to pass arguments to functions.
    /// Useful for easily extend accepted function arguments.
     #[derive(Debug, Clone)]
@@ -1122,6 +1151,14 @@
         /// Connection timeout in seconds
         pub timeout: u64,
         /// Verify Quay tls 
-        pub tls_verify: bool
+        pub tls_verify: bool,
+
+        pub mirror_login: Option<Vec<MirrorLogin>>
     }
 
+    #[derive(Debug, Clone)]
+    pub struct QuayFnArgumentsMirrorLogin {
+        pub repo: String,
+        pub user: String,
+        pub password: String
+    }

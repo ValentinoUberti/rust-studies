@@ -1,5 +1,5 @@
 use super::organization_struct::{OrganizationYaml, QuayResponse};
-use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments};
+use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments, QuayFnArgumentsMirrorLogin};
 use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
@@ -9,13 +9,13 @@ use governor::{self, RateLimiter};
 use log::{error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use tokio::time::Instant;
 use std::error::Error;
 use std::io::{self, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::{fs::File, sync::Arc};
 use tokio::fs::{self, read_dir};
+use tokio::time::Instant;
 
 #[derive(Debug)]
 pub struct QuayXmlConfig {
@@ -87,6 +87,8 @@ impl QuayXmlConfig {
 
             match serde_yaml::from_reader(f) {
                 Ok(scrape_config) => {
+
+                    
                     self.organization.push(scrape_config);
                 }
                 Err(e) => {
@@ -163,30 +165,25 @@ impl QuayXmlConfig {
             // Extract repositories mirror login informations
             for repo in org.repositories {
                 match repo.mirror_params {
-                    Some(mirror_params) => {
-                        match mirror_params.ext_registry_username {
-                            Some(username) => {
-                                let mirror_login = MirrorLogin {
-                                    organization: org.quay_organization.clone(),
-                                    repository: repo.name,
-                                    ext_registry_username: username,
-                                    ext_registry_password: "".to_string(),
-                                };
-                                quay_mirror_login.mirror_repository.push(mirror_login);
-
-                            },
-                            None => {},
+                    Some(mirror_params) => match mirror_params.ext_registry_username {
+                        Some(username) => {
+                            let mirror_login = MirrorLogin {
+                                organization: org.quay_organization.clone(),
+                                repository: repo.name,
+                                ext_registry_username: username,
+                                ext_registry_password: "".to_string(),
+                            };
+                            quay_mirror_login.mirror_repository.push(mirror_login);
                         }
-                    }
+                        None => {}
+                    },
 
-                    
                     None => {}
                 }
-            } // for 
+            } // for
         }
 
-
-        println!("{:?}",quay_mirror_login);
+        println!("{:?}", quay_mirror_login);
 
         quay_endpoints = quay_endpoints.unique();
 
@@ -211,7 +208,6 @@ impl QuayXmlConfig {
             Self::write_log(self.log_verbosity, &msg).await;
         }
 
-
         // To do - check path for windows
         if !std::path::Path::new(&format!("{}/{}", login_directory, login_file)).exists() {
             warn!("{} does not exits. Creating...", login_file);
@@ -235,7 +231,10 @@ impl QuayXmlConfig {
             let mut tmp_quay_mirror_login = QuayMirrorLogin::default();
 
             for mirror in quay_mirror_login.mirror_repository {
-                print!("Please insert password for user '{}', repository '{}' of organization '{}' :", mirror.ext_registry_username,mirror.repository,mirror.organization);
+                print!(
+                    "Please insert password for user '{}', repository '{}' of organization '{}' :",
+                    mirror.ext_registry_username, mirror.repository, mirror.organization
+                );
                 io::stdout().flush()?;
                 let mut token = String::new();
                 io::stdin().read_line(&mut token)?;
@@ -244,26 +243,23 @@ impl QuayXmlConfig {
                     organization: mirror.organization,
                     repository: mirror.repository,
                     ext_registry_username: mirror.ext_registry_username,
-                    ext_registry_password: token.trim().to_string()
+                    ext_registry_password: token.trim().to_string(),
                 };
-                
 
-                tmp_quay_mirror_login.mirror_repository.push(single_mirror_login);
+                tmp_quay_mirror_login
+                    .mirror_repository
+                    .push(single_mirror_login);
             } // for
-
-
 
             let f = std::fs::OpenOptions::new()
                 .write(true)
-                .create(true).append(true)
+                .create(true)
+                .append(true)
                 .open(format!("{}/{}", login_directory, login_file))?;
-      
-            logins.mirror_repository=Some(tmp_quay_mirror_login.mirror_repository);
+
+            logins.mirror_repository = Some(tmp_quay_mirror_login.mirror_repository);
 
             serde_yaml::to_writer(f, &logins)?;
-            
-
-            
         }
 
         Ok(())
@@ -300,7 +296,10 @@ impl QuayXmlConfig {
             }
             Err(e) => {
                 error!("Error: {}", e);
-                panic!("{}",format!("Can not continue. Please check network connectivity"));
+                panic!(
+                    "{}",
+                    format!("Can not continue. Please check network connectivity")
+                );
             }
         }
     }
@@ -332,6 +331,7 @@ impl QuayXmlConfig {
                 log_verbosity: self.log_verbosity,
                 timeout: self.timeout,
                 tls_verify: self.tls_verify,
+                mirror_login: None,
             };
 
             handles_delete_organization.push(org.delete_organization(quay_fn_arguments));
@@ -352,7 +352,6 @@ impl QuayXmlConfig {
             "Organizations deleted in {} seconds.",
             now.elapsed().as_secs_f32()
         );
-
 
         Ok(())
     }
@@ -390,6 +389,19 @@ impl QuayXmlConfig {
                 continue;
             }
 
+           let mut tmp_mirror_login = vec![];
+
+           match (&self.quay_login_configs.mirror_repository) {
+            Some(login_vec) => {
+                for l in login_vec {
+                    if l.organization == org.quay_organization {
+                        tmp_mirror_login.push(l.clone());
+                    }
+                }
+            },
+            None => {},
+        };
+
             let quay_fn_arguments = QuayFnArguments {
                 token,
                 governor: self.get_cloned_governor(),
@@ -397,6 +409,8 @@ impl QuayXmlConfig {
                 log_verbosity: self.log_verbosity,
                 timeout: self.timeout,
                 tls_verify: self.tls_verify,
+                mirror_login: Some(tmp_mirror_login),
+                
             };
 
             handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));
@@ -527,16 +541,10 @@ impl QuayXmlConfig {
             self.print_result("Teams ->".to_string(), result);
         }
 
-        info!(
-            "Teams created in  {} seconds.",
-            now.elapsed().as_secs_f32()
-        );
+        info!("Teams created in  {} seconds.", now.elapsed().as_secs_f32());
 
         // Adding team members
-        info!(
-            "Adding {} team members...",
-            handles_all_team_members.len()
-        );
+        info!("Adding {} team members...", handles_all_team_members.len());
         let now = Instant::now();
         let results = join_all(handles_all_team_members);
 
@@ -640,8 +648,6 @@ impl QuayXmlConfig {
     }
 }
 
-
-
 // Configuration struct contaning oauth token for each Quay endpoints
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct QuayLoginConfigs {
@@ -663,6 +669,8 @@ impl QuayLoginConfigs {
 
         None
     }
+
+   
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -671,9 +679,8 @@ struct QuayEndopoint {
     pub quay_token: String,
 }
 
-
 // Configuration struct for saving mirroring password for each repositories (if mirror username exists)
-// ``` 
+// ```
 // repositories:
 //  - name: alpine
 //  visibility: "public"
@@ -694,8 +701,8 @@ struct QuayEndopoint {
 // quay_mirror_login:
 //   - organization: <quay-organization>
 //     repository: <quay-repository>
-//     ext_registry_username: <ext_registry_username> 
-//     ext_registry_password: 
+//     ext_registry_username: <ext_registry_username>
+//     ext_registry_password:
 //
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -710,6 +717,3 @@ pub struct MirrorLogin {
     pub ext_registry_username: String,
     pub ext_registry_password: String,
 }
-
-
-
