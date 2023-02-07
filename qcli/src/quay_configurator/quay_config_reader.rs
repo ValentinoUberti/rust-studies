@@ -64,6 +64,7 @@ impl QuayXmlConfig {
             // Creating dummy configs
             let quay_login_configs: QuayLoginConfigs = QuayLoginConfigs {
                 quay_endpoint_login: vec![],
+                mirror_repository: None,
             };
             return Ok(Self {
                 organization: vec![],
@@ -254,17 +255,13 @@ impl QuayXmlConfig {
 
             let f = std::fs::OpenOptions::new()
                 .write(true)
-                .create(true)
+                .create(true).append(true)
                 .open(format!("{}/{}", login_directory, login_file))?;
+      
+            logins.mirror_repository=Some(tmp_quay_mirror_login.mirror_repository);
 
             serde_yaml::to_writer(f, &logins)?;
-
-            let f = std::fs::OpenOptions::new()
-            .write(true)
-            .append(true)
-            .open(format!("{}/{}", login_directory, login_file))?;
-
-            serde_yaml::to_writer(f, &tmp_quay_mirror_login)?;
+            
 
             
         }
@@ -649,6 +646,7 @@ impl QuayXmlConfig {
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct QuayLoginConfigs {
     pub quay_endpoint_login: Vec<QuayEndopoint>,
+    pub mirror_repository: Option<Vec<MirrorLogin>>,
 }
 
 impl QuayLoginConfigs {
