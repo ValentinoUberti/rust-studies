@@ -1,5 +1,7 @@
 use super::organization_struct::{OrganizationYaml, QuayResponse};
-use crate::quay_configurator::organization_struct::{Actions, QuayFnArguments, QuayFnArgumentsMirrorLogin};
+use crate::quay_configurator::organization_struct::{
+    Actions, QuayFnArguments, QuayFnArgumentsMirrorLogin,
+};
 use array_tool::vec::Uniq;
 use futures::future::join_all;
 use governor::clock::{QuantaClock, QuantaInstant};
@@ -9,6 +11,7 @@ use governor::{self, RateLimiter};
 use log::{error, info, warn};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::error::Error;
 use std::io::{self, Write};
 use std::num::NonZeroU32;
@@ -87,8 +90,6 @@ impl QuayXmlConfig {
 
             match serde_yaml::from_reader(f) {
                 Ok(scrape_config) => {
-
-                    
                     self.organization.push(scrape_config);
                 }
                 Err(e) => {
@@ -136,9 +137,107 @@ impl QuayXmlConfig {
 
             let result: Result<OrganizationYaml, serde_yaml::Error> = serde_yaml::from_reader(f2);
             match result {
-                Ok(_) => {
-                    info!("Config verified from  {:?} ", f.file_name());
-                }
+                Ok(org) => {
+                    info!("Config syntax of {:?} verified.  ", f.file_name());
+
+                    let mut quay_endpoints: Vec<String> = Vec::new();
+                    let mut quay_mirror_login = QuayMirrorLogin::default();
+
+                    //Mirror login repository not present in login.yaml
+                    let mut present_quay_mirror_login = QuayMirrorLogin::default();
+
+                    //println!("HERE");
+
+                    quay_endpoints.push(org.quay_endpoint.clone());
+
+                    match org.replicate_to {
+                        Some(replicated_to) => {
+                            quay_endpoints.extend(replicated_to);
+                        }
+                        None => {}
+                    }
+
+                    // Extract repositories mirror login informations
+                    for repo in org.repositories {
+                        match repo.mirror_params {
+                            Some(mirror_params) => match mirror_params.ext_registry_username {
+                                Some(username) => {
+                                    let mirror_login = MirrorLogin {
+                                        organization: org.quay_organization.clone(),
+                                        repository: repo.name,
+                                        ext_registry_username: username,
+                                        ext_registry_password: "".to_string(),
+                                    };
+                                    quay_mirror_login.mirror_repository.push(mirror_login);
+                                }
+                                None => {}
+                            },
+
+                            None => {}
+                        }
+                    }
+
+                    let msg = &format!("Mirror repository wanted user {:?}", quay_mirror_login);
+                    Self::write_log(self.log_verbosity, &msg).await;
+
+                    //println!("WANTED {:?}", quay_mirror_login);
+
+                    match &self.quay_login_configs.mirror_repository {
+                        Some(actuals) => {
+                            for actual in actuals {
+                                for configured in &quay_mirror_login.mirror_repository {
+                                    if actual.ext_registry_username
+                                        == configured.ext_registry_username
+                                    {
+                                        if actual.repository == configured.repository {
+                                            if actual.organization == org.quay_organization {
+                                                if actual.ext_registry_password.len() > 0 {
+                                                    present_quay_mirror_login
+                                                        .mirror_repository
+                                                        .push(configured.clone());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        None => {}
+                    }
+
+                    quay_endpoints = quay_endpoints.unique();
+
+                    let msg = &format!("Found {} unique Quay endpoint(s)", quay_endpoints.len());
+                    Self::write_log(self.log_verbosity, &msg).await;
+
+                    // Calculating vector difference
+                    // if present_quay_mirror_login and quay_mirror_login Vector are different, there is no password in login.yaml for required repo.
+                    // It's a O(N*M) operation, ok for small vectors
+
+                    let s1: HashSet<MirrorLogin> = present_quay_mirror_login
+                        .mirror_repository
+                        .iter()
+                        .cloned()
+                        .collect();
+                    let s2: HashSet<MirrorLogin> = quay_mirror_login
+                        .mirror_repository
+                        .iter()
+                        .cloned()
+                        .collect();
+
+                    let difference: HashSet<MirrorLogin> =
+                        (&s2 - &s1).iter().cloned().collect();
+
+                    
+
+                    if difference.len() > 0 {
+                        let msg = &format!("Missing mirror user password: {:?}. Check .qcli/login.yaml or run login subcommand.", difference);
+                        error!("{}", msg);
+                    } else {
+                        let msg = &format!("Missing mirror user password: {:?}", difference);
+                        Self::write_log(self.log_verbosity, &msg).await;
+                    }
+                } // OK
                 Err(e) => {
                     error!("{:?}", e)
                 }
@@ -389,18 +488,18 @@ impl QuayXmlConfig {
                 continue;
             }
 
-           let mut tmp_mirror_login = vec![];
+            let mut tmp_mirror_login = vec![];
 
-           match (&self.quay_login_configs.mirror_repository) {
-            Some(login_vec) => {
-                for l in login_vec {
-                    if l.organization == org.quay_organization {
-                        tmp_mirror_login.push(l.clone());
+            match &self.quay_login_configs.mirror_repository {
+                Some(login_vec) => {
+                    for l in login_vec {
+                        if l.organization == org.quay_organization {
+                            tmp_mirror_login.push(l.clone());
+                        }
                     }
                 }
-            },
-            None => {},
-        };
+                None => {}
+            };
 
             let quay_fn_arguments = QuayFnArguments {
                 token,
@@ -410,7 +509,6 @@ impl QuayXmlConfig {
                 timeout: self.timeout,
                 tls_verify: self.tls_verify,
                 mirror_login: Some(tmp_mirror_login),
-                
             };
 
             handles_all_organizations.push(org.create_organization(quay_fn_arguments.clone()));
@@ -669,8 +767,6 @@ impl QuayLoginConfigs {
 
         None
     }
-
-   
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -710,7 +806,7 @@ pub struct QuayMirrorLogin {
     pub mirror_repository: Vec<MirrorLogin>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, Eq, Hash)]
 pub struct MirrorLogin {
     pub organization: String,
     pub repository: String,

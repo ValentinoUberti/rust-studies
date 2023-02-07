@@ -175,14 +175,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     match &cli.command {
         SubCommands::Create(_) => {
             info!(
-                "Checking quay configurations file in {} directory...",
+                "Checking quay configurations file from {} directory...",
                 &cli.dir
             );
 
             config.check_config().await?;
 
             info!(
-                "Loading quay configurations file in {} directory...",
+                "Loading quay configurations file from {} directory...",
                 &cli.dir
             );
 
@@ -194,14 +194,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         SubCommands::Delete(_) => {
             info!(
-                "Checking quay configurations file in {} directory...",
+                "Checking quay configurations file from {} directory...",
                 &cli.dir
             );
 
             config.check_config().await?;
 
             info!(
-                "Loading quay configurations file in {} directory...",
+                "Loading quay configurations file from {} directory...",
                 &cli.dir
             );
 
@@ -213,20 +213,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         SubCommands::Check(_) => {
             info!(
-                "Checking quay configurations file in {} directory...",
+                "Checking quay configurations file from {} directory...",
                 &cli.dir
             );
 
             config.check_config().await?;
 
             info!(
-                "Loading quay configurations file in {} directory...",
+                "Loading quay configurations file from {} directory...",
                 &cli.dir
             );
             config.load_config().await?;
         }
         SubCommands::Login(_) => {
-            info!("Creating Quay login info from  {} directory...", &cli.dir);
+            info!("Creating Quay login info from {} directory...", &cli.dir);
             config.check_config().await?;
             config.load_config().await?;
             config.create_login().await?;
