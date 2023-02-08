@@ -1,6 +1,6 @@
 [package]
 name = "qcli"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Valentino Uberti <vuberti@redhat.com>"]
 
