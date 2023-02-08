@@ -7,6 +7,7 @@ use governor::middleware::NoOpMiddleware;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{self, RateLimiter};
 use log::{error, info, warn};
+use question::{Answer, Question};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -250,7 +251,7 @@ impl QuayXmlConfig {
         let mut quay_endpoints: Vec<String> = Vec::new();
         let mut quay_mirror_login = QuayMirrorLogin::default();
 
-        //println!("HERE");
+        // Extract organizations details from yaml
         for org in self.organization {
             quay_endpoints.push(org.quay_endpoint.clone());
 
@@ -282,7 +283,8 @@ impl QuayXmlConfig {
             } // for
         }
 
-        println!("{:?}", quay_mirror_login);
+        let msg = &format!("Found {:?} Quay mirror login", quay_mirror_login);
+        Self::write_log(self.log_verbosity, &msg).await;
 
         quay_endpoints = quay_endpoints.unique();
 
@@ -307,8 +309,30 @@ impl QuayXmlConfig {
             Self::write_log(self.log_verbosity, &msg).await;
         }
 
+        let relative_login_file_path=format!("{}/{}", login_directory, login_file);
+        if std::path::Path::new(&relative_login_file_path).exists() {
+            match Question::new(".qcli/login.yaml exists: Do you want to recreate it?")
+                .yes_no()
+                .until_acceptable()
+                .default(Answer::YES)
+                .show_defaults()
+                .ask() {
+                    Some(answer) => {
+                        match answer {
+                            Answer::RESPONSE(_) => {},
+                            Answer::NO => {},
+                            Answer::YES => {
+
+                                fs::remove_file(&relative_login_file_path).await?
+                            },
+                            
+                        }
+                    },
+                    None => todo!(),
+                }
+        }
         // To do - check path for windows
-        if !std::path::Path::new(&format!("{}/{}", login_directory, login_file)).exists() {
+        if !std::path::Path::new(&relative_login_file_path).exists() {
             warn!("{} does not exits. Creating...", login_file);
 
             let mut logins = QuayLoginConfigs::default();
@@ -354,7 +378,7 @@ impl QuayXmlConfig {
                 .write(true)
                 .create(true)
                 .append(true)
-                .open(format!("{}/{}", login_directory, login_file))?;
+                .open(&relative_login_file_path)?;
 
             logins.mirror_repository = Some(tmp_quay_mirror_login.mirror_repository);
 

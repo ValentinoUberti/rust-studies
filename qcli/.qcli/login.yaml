@@ -3,7 +3,11 @@ quay_endpoint_login:
   - quay_endpoint: example-registry-quay-quay-enterprise.apps.ocphub.lab.seeweb
     quay_token: 8P6fjleOVjXhtBnU3oEHlK6MclwPdGyfmbj3NZof
 mirror_repository:
+  - organization: exampleorg2
+    repository: alpine
+    ext_registry_username: hola
+    ext_registry_password: ciao
   - organization: exampleorg
     repository: alpine
     ext_registry_username: valeidm
-    ext_registry_password: casafu11
+    ext_registry_password: ariciao
